@@ -1,9 +1,0 @@
-diff a/Assets/Scenes/BaseScene.unity b/Assets/Scenes/BaseScene.unity	(rejected hunks)
-@@ -130,6 +130,7 @@
-     serializedVersion: 3
-     m_TransformParent: {fileID: 1634688647}
-     m_Modifications:
-+    - target: {fileID: 7148075132642631075, guid: 778e6ee5be429d34ba9e4371143136c8, type: 3}
-       propertyPath: m_Name
-       value: HpPanel
-       objectReference: {fileID: 0}

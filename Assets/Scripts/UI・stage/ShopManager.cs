@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static UnityEditor.Progress;
+
 
 // ショップ全体の流れを管理するスクリプト
 public class ShopManager : MonoBehaviour

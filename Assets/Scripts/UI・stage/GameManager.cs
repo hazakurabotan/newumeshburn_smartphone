@@ -46,6 +46,7 @@ public class GameManager : MonoBehaviour
     public Sprite railgunCutinSprite;
     public static bool isPaused = false;
     public GameObject pausePanel;
+    public TimeController timeCnt;
 
 
     // === ゲーム進行・成長関連 ===
@@ -66,7 +67,7 @@ public class GameManager : MonoBehaviour
     // === タイマー関連 ===
     public GameObject timeBar;
     public TextMeshProUGUI timeText;
-    TimeController timeCnt; // タイマー用スクリプト
+    
 
     // === スコア管理 ===
     public TextMeshProUGUI scoreText;
@@ -103,46 +104,45 @@ public class GameManager : MonoBehaviour
     // ------------------------------------------------------
     void Start()
     {
-        ResetAllUI(); // 全UIを非表示などに初期化
+        // Inspectorで設定済みならそれを使う
+        // 未設定時のみ自動取得する
+        if (timeCnt == null)
+            timeCnt = FindObjectOfType<TimeController>();
 
-        StartCoroutine(InitAfterFrame()); // フレーム跨ぎの初期化
+        ResetAllUI();
 
-        // 復活用Canvasと動画は必ずオフに
+        StartCoroutine(InitAfterFrame());
+
         if (videoCanvas != null) videoCanvas.SetActive(false);
         if (videoPlayer != null)
         {
             videoPlayer.Stop();
             videoPlayer.frame = 0;
         }
-
-        // リスタートから来たときは復活演出をスキップ
         if (fromRestart)
         {
             triedRevival = true;
             fromRestart = false;
         }
-
-        // ステージ番号初期化（Stage1シーンなら1に）
         if (SceneManager.GetActiveScene().name == "Stage1") currentStage = 1;
-
-        InactiveImage(); // mainImage非表示
+        InactiveImage();
         panel.SetActive(false);
 
-        // タイマー制御（0秒の場合は非表示）
-        timeCnt = GetComponent<TimeController>();
+        // ↓ここ消してOK！　【絶対不要】
+        // timeCnt = GetComponent<TimeController>();
+
         if (timeCnt != null && timeCnt.gameTime == 0.0f) timeBar.SetActive(false);
 
-        // アイテムパネル非表示
         if (itemDisplayPanel != null) itemDisplayPanel.SetActive(false);
-        UpdateScore(); // スコアUI更新
+        UpdateScore();
 
-        // ボタン類非表示
         if (restartButton != null) restartButton.SetActive(false);
         if (nextButton != null) nextButton.SetActive(false);
 
         if (levelUpPanel != null)
             levelUpPanel.SetActive(false);
     }
+
 
     // ------------------------------------------------------
     // フレーム跨ぎの初期化処理（HPバー再取得・復活演出など）
@@ -195,6 +195,10 @@ public class GameManager : MonoBehaviour
     // ------------------------------------------------------
     void Update()
     {
+        if (timeCnt == null) Debug.LogError("timeCntがnullです！");
+        else Debug.Log("timeCnt=" + timeCnt.displayTime);
+
+
         // タイマーUI更新
         if (timeCnt != null && timeText != null)
         {
