@@ -28,11 +28,13 @@ public class HpBarController : MonoBehaviour
     /// <param name="maxHp">最大HP（デフォルト15）</param>
     public void SetHp(int currentHp, int maxHp = 15)
     {
-        // HP値が範囲外にならないよう制限
-        int idx = Mathf.Clamp(currentHp, 0, 15);
+        // 0〜15 段階に正規化
+        int idx = Mathf.RoundToInt(Mathf.Clamp01((float)currentHp / Mathf.Max(1, maxHp)) * 15f);
+        idx = Mathf.Clamp(idx, 0, 15);
 
-        // 画像が正しくロードされていれば、そのスプライトをセット
         if (hpSprites != null && idx < hpSprites.Length && hpSprites[idx] != null)
             barImage.sprite = hpSprites[idx];
     }
+
+
 }

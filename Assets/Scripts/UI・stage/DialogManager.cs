@@ -1,162 +1,169 @@
+ï»¿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 // ====================
-// 1s‚Ô‚ñ‚Ì‰ï˜bƒf[ƒ^‚ğ‚Ü‚Æ‚ß‚éƒNƒ‰ƒX
+// 1è¡Œã¶ã‚“ã®ä¼šè©±ãƒ‡ãƒ¼ã‚¿
 // ====================
 [System.Serializable]
 public class DialogLine
 {
-    public string speakerName;   // ”­Œ¾Ò–¼i’N‚ÌƒZƒŠƒt‚©j
-    public Sprite speakerIcon;   // ”­Œ¾Ò‚ÌƒAƒCƒRƒ“‰æ‘œiŠçƒOƒ‰“™j
-    public string text;          // ƒZƒŠƒt–{•¶
+    public string speakerName;
+    public Sprite speakerIcon;
+    [TextArea(2, 5)]
+    public string text;
+    public AudioClip voice; // ğŸ¤ â† è¿½åŠ ï¼šå†ç”Ÿã—ãŸã„éŸ³å£°ï¼ˆä»»æ„ï¼‰
 }
 
 // ====================
-// ‰ï˜bƒEƒBƒ“ƒhƒE‚ğŠÇ—‚·‚éƒNƒ‰ƒX
+// ä¼šè©±ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ç®¡ç†
 // ====================
 public class DialogManager : MonoBehaviour
 {
-    // --- UI•”•iiInspector‚ÅƒAƒTƒCƒ“j ---
-    public GameObject dialogPanel;         // ‰ï˜bƒEƒBƒ“ƒhƒE‘S‘Ì‚Ìƒpƒlƒ‹
-    public TextMeshProUGUI dialogText;     // ƒZƒŠƒt–{•¶•\¦—p
-    public TextMeshProUGUI nameText;       // ”­Œ¾Ò–¼•\¦—p
-    public Image iconImage;                // ”­Œ¾ÒƒAƒCƒRƒ“—p
+    public static DialogManager Instance;
+
+    private PlayerInput playerInput;
+    private InputAction nextAction;
+    public InputActionReference advanceAction;
+
+    public GameObject dialogPanel;
+    public TextMeshProUGUI dialogText;
+    public TextMeshProUGUI nameText;
+    public Image iconImage;
+    public AudioSource voiceSource; // ğŸ¤ â† è¿½åŠ ï¼šãƒœã‚¤ã‚¹å†ç”Ÿç”¨
 
     public TimeController timeController;
+    public GameObject BossPanel;
+    public TextMeshProUGUI bossHPText;
 
-    // --- ‰ï˜bƒf[ƒ^ ---
-    public DialogLine[] dialogLines;       // ‰ï˜b“à—e‚Ì”z—ñiInspector‚Å•ÒW‚àOKj
-    int currentSentence = 0;               // ¡•\¦‚µ‚Ä‚¢‚éƒZƒŠƒt‚Ì”Ô†
-    bool isTalking = false;                // ‰ï˜b’†‚©‚Ç‚¤‚©
+    public DialogLine[] dialogLines;
+    int currentSentence = 0;
+    bool isTalking = false;
 
-    // --- ‰ï˜bI—¹Œã‚É•\¦E‹N“®‚·‚é‚à‚Ì ---
-    //public GameObject stage2WallLeft;            // ¶‘¤‚Ì•Çiƒ{ƒXíŠJn—pj
-    //public GameObject stage2WallRight;           // ‰E‘¤‚Ì•Ç
-    public GameObject BossPanel;         // ƒ{ƒX‚ÌHPƒo[
-    public TextMeshProUGUI bossHPText;     // ƒ{ƒXHP‚Ì”š•\¦i–¢g—p‚Å‚àOKj
+    void Awake()
+    {
+        Instance = this;
+        playerInput = FindObjectOfType<PlayerInput>();
+    }
 
-    // --- –ˆƒtƒŒ[ƒ€ŒÄ‚Î‚ê‚é ---
+    void Start()
+    {
+        dialogPanel.SetActive(false);
+        if (BossPanel == null) BossPanel = GameObject.Find("BossPanel");
+        if (timeController == null) timeController = FindObjectOfType<TimeController>();
+    }
+
     void Update()
     {
-        // ‰ï˜b’†‚Ì‚İZƒL[‚ÅŸ‚ÌƒZƒŠƒt‚Éi‚Ş
         if (isTalking && Input.GetKeyDown(KeyCode.Z))
         {
             NextSentence();
         }
     }
 
-    void Start()
-    {
-        Debug.Log("yDialogManager StartzScene“à‚É‘¶İ‚·‚éDialogManagerˆê——«");
-        foreach (var dm in FindObjectsOfType<DialogManager>())
-        {
-            Debug.Log("DialogManager: " + dm.gameObject.name);
-        }
-
-        var allDialogManagers = FindObjectsOfType<DialogManager>();
-        Debug.Log($"yDialogManagerƒ`ƒFƒbƒNzFindObjectsOfType<DialogManager>().Length = {allDialogManagers.Length}");
-        foreach (var dm in allDialogManagers)
-        {
-            Debug.Log($"DialogManager–¼: {dm.name} / e: {dm.transform.parent?.name}");
-        }
-
-
-        dialogPanel.SetActive(false); // ƒV[ƒ“ŠJn’¼Œã‚Í”ñ•\¦
-
-        // QÆØ‚ê‘Îô: –¼‘O‚Å’T‚·
-        //if (stage2WallLeft == null) stage2WallLeft = GameObject.Find("WallLeft");
-        //if (stage2WallRight == null) stage2WallRight = GameObject.Find("WallRight");
-        if (BossPanel == null) BossPanel = GameObject.Find("BossPanel");
-
-        if (timeController == null)
-            timeController = FindObjectOfType<TimeController>();
-    }
-
-
-
-    // === ‰ï˜bŠJn‚ÌŠÖ”i‘¼ƒXƒNƒŠƒvƒg‚©‚çŒÄ‚Î‚ê‚éj ===
+    // ===== é€šå¸¸ã®ä¼šè©±é–‹å§‹ =====
     public void StartDialog(DialogLine[] lines)
     {
-        // šƒvƒŒƒCƒ„[‚ğŠ®‘S’â~‚³‚¹‚é
         var player = GameObject.FindWithTag("Player");
         if (player != null)
         {
-
             var rb = player.GetComponent<Rigidbody2D>();
             var pc = player.GetComponent<PlayerController>();
-            if (rb != null) rb.velocity = Vector2.zero;   // Šµ«ƒXƒgƒbƒv
-            if (pc != null) pc.enabled = false;           // ƒvƒŒƒCƒ„[‘€ì‚ğ~‚ß‚é
+            if (rb != null) rb.velocity = Vector2.zero;
+            if (pc != null) pc.enabled = false;
         }
 
         if (timeController != null)
             timeController.enabled = false;
 
-        dialogLines = lines;      // ‰ï˜bƒf[ƒ^‚ğƒZƒbƒg
-        currentSentence = 0;     // Å‰‚Ìs‚©‚ç
-        dialogPanel.SetActive(true); // ‰ï˜bƒpƒlƒ‹‚ğ•\¦
-        isTalking = true;        // ‰ï˜b’†ƒtƒ‰ƒOON
-        ShowSentence();          // Å‰‚ÌƒZƒŠƒt•\¦
+        dialogLines = lines;
+        currentSentence = 0;
+        dialogPanel.SetActive(true);
+        isTalking = true;
+        ShowSentence();
     }
 
-    // === Œ»İ‚ÌƒZƒŠƒt‚ğ‰æ–Ê‚É•\¦‚·‚é ===
+    // ===== ã‚»ãƒªãƒ•è¡¨ç¤º =====
     void ShowSentence()
     {
-        // ‚Ü‚¾ƒZƒŠƒt‚ªc‚Á‚Ä‚¢‚ê‚Îc
         if (currentSentence < dialogLines.Length)
         {
             var line = dialogLines[currentSentence];
+            dialogText.text = line.text;
+            nameText.text = line.speakerName;
+            iconImage.sprite = line.speakerIcon;
+            iconImage.enabled = (line.speakerIcon != null);
 
-            dialogText.text = line.text;                 // ƒZƒŠƒt–{•¶
-            nameText.text = line.speakerName;            // –¼‘O
-            iconImage.sprite = line.speakerIcon;         // ƒAƒCƒRƒ“
-            iconImage.enabled = (line.speakerIcon != null); // ƒAƒCƒRƒ“‚ª‚ ‚ê‚Î•\¦
+            // ğŸ¤ ãƒœã‚¤ã‚¹ãŒè¨­å®šã•ã‚Œã¦ãŸã‚‰å†ç”Ÿ
+            if (voiceSource && line.voice)
+                voiceSource.PlayOneShot(line.voice);
         }
         else
         {
-            EndDialog(); // ‘SƒZƒŠƒtI—¹¨‰ï˜bI—¹ˆ—‚Ö
+            EndDialog();
         }
     }
 
-    // === ZƒL[‚ÅŸ‚ÌƒZƒŠƒt‚Éi‚Ş ===
+    // ===== æ¬¡ã¸ =====
     void NextSentence()
     {
-        currentSentence++;    // ”Ô†‚ği‚ß‚Ä
-        ShowSentence();       // Ÿ‚ÌƒZƒŠƒt•\¦
+        currentSentence++;
+        ShowSentence();
     }
 
-    // === ‰ï˜bI—¹ˆ— ===
+    // ===== ä¼šè©±çµ‚äº† =====
     void EndDialog()
     {
-        dialogPanel.SetActive(false);   // ‰ï˜bƒEƒBƒ“ƒhƒE‚ğ‰B‚·
-        isTalking = false;              // ‰ï˜b’†ƒtƒ‰ƒOOFF
+        dialogPanel.SetActive(false);
+        isTalking = false;
 
         if (timeController != null)
             timeController.enabled = true;
 
-        // •Ç‚âƒ{ƒXHPƒo[‚ğ•\¦‚µ‚Äƒ{ƒXíŠJn€”õ
-        //if (stage2WallLeft != null) stage2WallLeft.SetActive(true);
-        //if (stage2WallRight != null) stage2WallRight.SetActive(true);
-        if (BossPanel != null) BossPanel.SetActive(true);
-
-
+        if (BossPanel != null)
+            BossPanel.SetActive(true);
 
         var boss = FindObjectOfType<BossSimpleJump>();
         if (boss != null)
             boss.isActive = true;
-        else
-            Debug.LogWarning("BossSimpleJump‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ‚Å‚µ‚½I");
 
-        // ƒvƒŒƒCƒ„[‘€ì‚àÄ‚Ñ—LŒø‰»
         var player = FindObjectOfType<PlayerController>();
         if (player != null)
             player.enabled = true;
-        else
-            Debug.LogWarning("PlayerController‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ‚Å‚µ‚½I");
+    }
+
+    // ===== ã‚ªãƒ¼ãƒ—ãƒ‹ãƒ³ã‚°ãªã©ã§ä½¿ã†éŸ³å£°ä»˜ãã‚·ãƒ¼ã‚±ãƒ³ã‚¹å†ç”Ÿ =====
+    public void PlaySequence(DialogLine[] lines, Action onFinished = null)
+    {
+        StartCoroutine(CoPlaySequence(lines, onFinished));
+    }
+
+    IEnumerator CoPlaySequence(DialogLine[] lines, Action onFinished)
+    {
+        dialogPanel.SetActive(true);
+
+        foreach (var line in lines)
+        {
+            dialogText.text = line.text;
+            nameText.text = line.speakerName;
+            iconImage.sprite = line.speakerIcon;
+            iconImage.enabled = (line.speakerIcon != null);
+
+            if (voiceSource && line.voice)
+                voiceSource.PlayOneShot(line.voice);
+
+            // Southãƒœã‚¿ãƒ³ã¾ãŸã¯Zã‚­ãƒ¼ã§é€²ã‚€
+            yield return new WaitUntil(() =>
+                Input.GetKeyDown(KeyCode.Z) ||
+                Input.GetKeyDown(KeyCode.Space)
+            );
+        }
+
+        dialogPanel.SetActive(false);
+        onFinished?.Invoke();
     }
 }
-
-

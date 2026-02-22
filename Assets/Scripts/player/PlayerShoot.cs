@@ -1,145 +1,136 @@
 using UnityEngine;
 
-// ----------------------------------------------
-// PlayerShoot
-// プレイヤーの弾発射（連射・チャージ・リロード対応）を管理するスクリプト
-// ----------------------------------------------
 public class PlayerShoot : MonoBehaviour
 {
-    public GameObject bulletPrefab;    // 弾プレハブ（弾の元となるオブジェクト）
-    public Transform firePoint;        // 発射位置（Transform）
-    public float bulletSpeed = 5f;     // 弾の速度
+    [Header("Bullet")]
+    public GameObject bulletPrefab;     // shell.prefab
+    public Transform firePoint;         // FirePoint
+    public float bulletSpeed = 5f;
 
-    [HideInInspector] public float chargeTime = 0f;    // チャージ時間（公開だがインスペクター非表示）
-    [HideInInspector] public bool isCharging = false;  // チャージ中フラグ
-    public float requiredCharge = 2.0f;                // フルチャージに必要な秒数
+    [Header("Charge (互換用：Inspector/他スクリプト参照のため残す)")]
+    public float requiredCharge = 2f;   // 使わない（残すだけ）
+    public bool isCharging = false;     // 使わない（残すだけ）
+    public float chargeTime = 0f;       // 使わない（残すだけ）
 
-    public int maxShots = 3;         // 連射できる回数（弾数制限）
-    public float reloadTime = 1.0f;  // 弾切れ後のリロード時間
-    private int shotsFired = 0;      // 現在連射した回数
-    private float lastFireTime = -99f;   // 最後に撃った時間（リロード判定用）
-    private bool isReloading = false;    // リロード中かどうか
+    [Header("Ammo")]
+    public int maxShots = 3;
+    public float reloadTime = 1.0f;
 
-    PlayerController playerController;   // プレイヤー本体の情報取得用
+    int shotsFired = 0;
+    float lastFireTime = -999f;
+    bool isReloading = false;
 
-    void Start()
+    [Header("Animator (ShotPose Trigger)")]
+    public string shotTriggerName = "Shot"; // AnimatorのTrigger名
+    Animator animator;
+
+    PlayerController playerController;
+    CapsuleCollider2D playerCol;
+
+    void Awake()
     {
+        animator = GetComponent<Animator>();
         playerController = GetComponent<PlayerController>();
+        playerCol = GetComponent<CapsuleCollider2D>();
     }
 
     void Update()
     {
-        // リロード中は撃てない
-        if (isReloading)
+        // リロード処理
+        if (isReloading && Time.time - lastFireTime >= reloadTime)
         {
-            if (Time.time - lastFireTime > reloadTime)
-            {
-                shotsFired = 0;
-                isReloading = false;
-            }
+            shotsFired = 0;
+            isReloading = false;
+        }
+    }
+
+    // =========================
+    // ここが PlayerController.OnShoot(ctx.started) から呼ばれる
+    // 「押した瞬間に撃つ」仕様に変更
+    // =========================
+    public void OnShootButtonDown()
+    {
+        if (isReloading) return;
+
+        if (shotsFired >= maxShots)
+        {
+            isReloading = true;
+            lastFireTime = Time.time;
             return;
         }
 
-        // キーボードチャージ開始
-        if (Input.GetKeyDown(KeyCode.X))
+        // ★押した瞬間にShotPoseへ
+        if (animator != null && !string.IsNullOrEmpty(shotTriggerName))
         {
-            if (shotsFired < maxShots)
-            {
-                isCharging = true;
-                chargeTime = 0f;
-            }
-            else
-            {
-                isReloading = true;
-                lastFireTime = Time.time;
-            }
+            animator.SetTrigger(shotTriggerName);
         }
 
-        // ---この判定を必ずこうする---
-        if (isCharging)
-        {
-            chargeTime += Time.deltaTime;
-        }
+        // ★通常弾を即発射（チャージ無し）
+        Shoot(false);
 
-        // キーボード発射
-        if (isCharging && Input.GetKeyUp(KeyCode.X))
-        {
-            Shoot(chargeTime >= requiredCharge);
-            isCharging = false;
-            chargeTime = 0f;
-            shotsFired++;
-            if (shotsFired >= maxShots)
-            {
-                isReloading = true;
-                lastFireTime = Time.time;
-            }
-        }
-    }
-
-
-    // --- 弾を発射する処理（powered=trueでパワーショット）---
-    public void Shoot(bool powered)
-    {
-        // 弾を発生させて初期位置・速度を与える
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
-        Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
-        PlayerBullet pb = bullet.GetComponent<PlayerBullet>();
-
-        // プレイヤーの向き（ローカルスケールX）で左右発射切り替え
-        float direction = transform.localScale.x > 0 ? 1f : -1f;
-        if (rb != null)
-            rb.velocity = new Vector2(direction * bulletSpeed, 0f);
-
-        // ダメージや大きさも切り替え
-        if (pb != null)
-        {
-            int baseDamage = 1;
-            if (playerController != null)
-                baseDamage = playerController.bulletDamage;
-
-            if (powered)
-            {
-                pb.damage = baseDamage + 2;         // パワーショットは＋２ダメージ
-                bullet.transform.localScale *= 4f;  // サイズも大きく
-            }
-            else
-            {
-                pb.damage = baseDamage;
-            }
-        }
-        Destroy(bullet, 3.0f); // 3秒後に弾を消す（メモリリーク防止）
-    }
-
-    // ボタン押した時
-    public void OnShootButtonDown()
-    {
-        if (shotsFired < maxShots)
-        {
-            isCharging = true;
-            chargeTime = 0f;
-        }
-        else
+        shotsFired++;
+        if (shotsFired >= maxShots)
         {
             isReloading = true;
             lastFireTime = Time.time;
         }
     }
 
-    // ボタン離した時
+    // 「離した瞬間」は今回何もしない（互換のため残す）
     public void OnShootButtonUp()
     {
-        if (isCharging)
-        {
-            Shoot(chargeTime >= requiredCharge); // チャージ判定
-            isCharging = false;
-            chargeTime = 0f;
-            shotsFired++;
-            if (shotsFired >= maxShots)
-            {
-                isReloading = true;
-                lastFireTime = Time.time;
-            }
-        }
+        // 何もしない
+        // （将来チャージ制を戻すなら、ここで powered 判定して Shoot(true/false) にできる）
+        isCharging = false;
+        chargeTime = 0f;
     }
 
+    // =========================
+    // 弾生成
+    // powered=true は将来用（今回は常にfalse）
+    // =========================
+    public void Shoot(bool powered)
+    {
+        if (bulletPrefab == null || firePoint == null) return;
+
+        // 向き：scale.x の符号で左右判定
+        float dir = (transform.localScale.x >= 0f) ? 1f : -1f;
+
+        Vector3 spawnPos = firePoint.position + new Vector3(0.25f * dir, 0f, 0f);
+        GameObject bullet = Instantiate(bulletPrefab, spawnPos, Quaternion.identity);
+
+        // 左向きなら見た目だけ反転
+        if (dir < 0f)
+            bullet.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+
+        // 速度
+        var rb = bullet.GetComponent<Rigidbody2D>();
+        if (rb != null)
+            rb.velocity = new Vector2(dir * bulletSpeed, 0f);
+
+        // 自分と弾の衝突だけ無視（ここは巻き込み防止で「自分のCapsuleだけ」に限定）
+        if (playerCol != null)
+        {
+            var bCol = bullet.GetComponent<Collider2D>();
+            if (bCol != null)
+                Physics2D.IgnoreCollision(bCol, playerCol, true);
+        }
+
+        // もし PlayerBullet みたいなスクリプトが弾に付いてて damage を持ってるなら反映
+        // （クラス名が違ってもコンパイル壊さないため、TryGetComponent を使う）
+        int baseDamage = (playerController != null) ? playerController.bulletDamage : 1;
+
+        // DamageDealerが付いてるならそれを優先して上書き（あなたのshellに付いてる）
+        var dd = bullet.GetComponent<DamageDealer>();
+        if (dd != null)
+        {
+            dd.damage = powered ? baseDamage + 2 : baseDamage;
+        }
+
+        // powered の見た目演出（必要なら）
+        if (powered)
+            bullet.transform.localScale *= 4f;
+
+        Destroy(bullet, 3.0f);
+    }
 }

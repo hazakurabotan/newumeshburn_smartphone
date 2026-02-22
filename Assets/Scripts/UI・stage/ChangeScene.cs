@@ -7,7 +7,7 @@ public class ChangeScene : MonoBehaviour
 {
     // 移動したいシーンの名前をInspectorで設定
     // 例: "Stage1"や"GameOver"など
-    public string sceneName = "Stage2"; // ← わかりやすくシーン名と命名！
+    public string sceneName = "Title"; // ← わかりやすくシーン名と命名！
 
     // この関数を呼ぶと指定したシーンに切り替わる
     public void Load()

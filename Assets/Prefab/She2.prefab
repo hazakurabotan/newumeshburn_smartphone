@@ -11,10 +11,9 @@ GameObject:
   - component: {fileID: 829237633448926171}
   - component: {fileID: 4076631719696001465}
   - component: {fileID: 2833299365948957937}
-  - component: {fileID: 2981070378923789060}
   - component: {fileID: 7091075301498646632}
   - component: {fileID: 8799810465424237121}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: She2
   m_TagString: EnemyBullet
   m_Icon: {fileID: 0}
@@ -31,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 21.2342, y: -2.9058, z: 0}
-  m_LocalScale: {x: 0.20068955, y: 0.20068955, z: 0.20068955}
+  m_LocalScale: {x: 0.6604671, y: 0.6758922, z: 0.20068955}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -113,43 +112,8 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 0
---- !u!70 &2981070378923789060
-CapsuleCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2431169418744799914}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 1
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
-  m_Size: {x: 0.54, y: 0.54}
-  m_Direction: 0
 --- !u!58 &7091075301498646632
 CircleCollider2D:
   m_ObjectHideFlags: 0

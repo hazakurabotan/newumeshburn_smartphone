@@ -14,6 +14,12 @@ public class SummonFastWalker : MonoBehaviour
     private Rigidbody2D rb;
     private Animator animator;
 
+    bool HasParam(Animator anim, string name)
+    {
+        foreach (var p in anim.parameters) if (p.name == name) return true;
+        return false;
+    }
+
     void Start()
     {
         Destroy(gameObject, 3f);
@@ -44,6 +50,8 @@ public class SummonFastWalker : MonoBehaviour
         // ï‡çsÉAÉjÉÅêÿÇËë÷Ç¶
         if (animator != null && !string.IsNullOrEmpty(moveParamName))
         {
+            if (animator && !string.IsNullOrEmpty(moveParamName) && HasParam(animator, moveParamName))
+                animator.SetBool(moveParamName, true);
             animator.SetBool(moveParamName, true);
         }
     }

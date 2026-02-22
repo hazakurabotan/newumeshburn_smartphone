@@ -34,7 +34,7 @@ AudioMixerGroupController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: BGM
+  m_Name: BGMVol
   m_AudioMixer: {fileID: 24100000}
   m_GroupID: 6a508794b01f53043bc6723f3a328425
   m_Children: []
@@ -62,12 +62,21 @@ AudioMixerController:
   m_SuspendThreshold: -80
   m_EnableSuspend: 1
   m_UpdateMode: 0
-  m_ExposedParameters: []
+  m_ExposedParameters:
+  - guid: a9deca961b8e27c48b3413b96341315e
+    name: BGMVol
+  - guid: 933345a2ff1fe334db5fe86fd28f98a2
+    name: MasterVol
+  - guid: 2abd574b9388a7747ade353c1829be80
+    name: SEVol
+  - guid: 14806ddaf586d914b983f3b3b9cf7439
+    name: VoiceVol
   m_AudioMixerGroupViews:
   - guids:
     - 0cc1b3b12440fe14d8bf7f2ca959c987
     - 6a508794b01f53043bc6723f3a328425
     - fb6389882ae8e07468250cf4e7c31fc9
+    - bfd7e89e2011fc941a294018a58033e7
     name: View
   m_CurrentViewIndex: 0
   m_TargetSnapshot: {fileID: 24500006}
@@ -83,6 +92,7 @@ AudioMixerGroupController:
   m_Children:
   - {fileID: -2011420654043804479}
   - {fileID: 5221855589494966874}
+  - {fileID: 6320873917984902787}
   m_Volume: 933345a2ff1fe334db5fe86fd28f98a2
   m_Pitch: 5b6a09967bb066843864fba651fe0c1e
   m_Send: 00000000000000000000000000000000
@@ -116,16 +126,30 @@ AudioMixerSnapshotController:
   m_AudioMixer: {fileID: 24100000}
   m_SnapshotID: 435e36a5b9e514845b35781be88f56c5
   m_FloatValues:
-    a9deca961b8e27c48b3413b96341315e: -9.332112
+    a9deca961b8e27c48b3413b96341315e: -24.4
     2abd574b9388a7747ade353c1829be80: -2.5738313
   m_TransitionOverrides: {}
+--- !u!244 &5050453535377065613
+AudioMixerEffectController:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_EffectID: 179e81fe86e701445b95c58424eadb9b
+  m_EffectName: Attenuation
+  m_MixLevel: f4766a6ad8fb68f49a357762f1f591d2
+  m_Parameters: []
+  m_SendTarget: {fileID: 0}
+  m_EnableWetMix: 0
+  m_Bypass: 0
 --- !u!243 &5221855589494966874
 AudioMixerGroupController:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SE
+  m_Name: SEVol
   m_AudioMixer: {fileID: 24100000}
   m_GroupID: fb6389882ae8e07468250cf4e7c31fc9
   m_Children: []
@@ -134,6 +158,25 @@ AudioMixerGroupController:
   m_Send: 00000000000000000000000000000000
   m_Effects:
   - {fileID: -8608440161129112727}
+  m_UserColorIndex: 0
+  m_Mute: 0
+  m_Solo: 0
+  m_BypassEffects: 0
+--- !u!243 &6320873917984902787
+AudioMixerGroupController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: VoiceVol
+  m_AudioMixer: {fileID: 24100000}
+  m_GroupID: bfd7e89e2011fc941a294018a58033e7
+  m_Children: []
+  m_Volume: 14806ddaf586d914b983f3b3b9cf7439
+  m_Pitch: a7004394f81cf474398eb143db6beaf9
+  m_Send: 00000000000000000000000000000000
+  m_Effects:
+  - {fileID: 5050453535377065613}
   m_UserColorIndex: 0
   m_Mute: 0
   m_Solo: 0

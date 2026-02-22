@@ -19,6 +19,13 @@ TagManager:
   - Wall
   - EnemyBullet
   - Summon
+  - RopeHead
+  - HookBlock
+  - Rope
+  - PlayerCore
+  - Guard
+  - Missile
+  - GearHook
   layers:
   - Default
   - TransparentFX
@@ -31,10 +38,10 @@ TagManager:
   - Player
   - Summon
   - 
-  - 
-  - 
-  - 
-  - 
+  - PlayerBullet
+  - EnemyBullet
+  - Enemy
+  - Boss
   - 
   - 
   - 

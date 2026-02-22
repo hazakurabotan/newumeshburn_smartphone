@@ -9,8 +9,17 @@ EditorBuildSettings:
     path: Assets/Scenes/Title.unity
     guid: c44eba0db65caa64c9970cee4113a590
   - enabled: 1
+    path: Assets/Scenes/Opening.unity
+    guid: b0ef9c1a40aaa7c468e32126b379ff35
+  - enabled: 1
+    path: Assets/Scenes/CharacterSelect.unity
+    guid: 36c9fedbf4686f6458473dc8614fafe6
+  - enabled: 1
     path: Assets/Scenes/Stage1 1.unity
     guid: 1163bb1bb2c239345bbcb7388b07c367
+  - enabled: 1
+    path: Assets/Scenes/robobattle.unity
+    guid: 7c09136327d9912498f5bb3e46af1ef8
   - enabled: 1
     path: Assets/Scenes/Resuit.unity
     guid: bee9cc6090e712548828858dfe1d1701
