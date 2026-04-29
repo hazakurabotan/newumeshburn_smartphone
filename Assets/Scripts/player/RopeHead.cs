@@ -26,6 +26,7 @@ public class RopeHead : MonoBehaviour
 
     Rigidbody2D rb;
     Rigidbody2D playerRb;
+    CircleCollider2D circleCol;
 
     PlayerController playerController;
     MawaruController mawaruController;
@@ -46,6 +47,8 @@ public class RopeHead : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        circleCol = GetComponent<CircleCollider2D>();
+
         rb.gravityScale = 0f;
         timer = 0f;
     }
@@ -119,12 +122,42 @@ public class RopeHead : MonoBehaviour
         return enemy.IsShellStunned;
     }
 
+    bool CanMawaruGrabEnemy(Enemy enemy)
+    {
+        if (mawaruController == null) return true;
+        if (!mawaruOnlyGrabWhenStunned) return true;
+
+        if (IsEnemyStunnedForMawaru(enemy)) return true;
+
+        var win = enemy.GetComponent<EnemyPunchGrabWindow>();
+        return win != null && win.IsOpen;
+    }
+
+    Vector2 GetHookProbeWorld()
+    {
+        if (circleCol == null) return transform.position;
+        return transform.TransformPoint(circleCol.offset);
+    }
+
+    Vector2 GetHookProbeOffsetWorld()
+    {
+        if (circleCol == null) return Vector2.zero;
+        return transform.TransformVector(circleCol.offset);
+    }
+
     void OnTriggerEnter2D(Collider2D other)
     {
         // Hookに刺さる
         if (IsHookTag(other.tag))
         {
-            transform.position = other.transform.position;
+            // 今の「手の部分」の位置を基準に、当たった場所へ吸着させる
+            Vector2 probeWorld = GetHookProbeWorld();
+            Vector2 hitPoint = other.ClosestPoint(probeWorld);
+            Vector2 rootToProbe = GetHookProbeOffsetWorld();
+            Vector2 newRootPos = hitPoint - rootToProbe;
+
+            rb.position = newRootPos;
+            transform.position = newRootPos;
 
             rb.velocity = Vector2.zero;
             rb.angularVelocity = 0f;
@@ -134,22 +167,20 @@ public class RopeHead : MonoBehaviour
             returning = false;
             stuckOnHook = true;
 
-            // 既存Jointを掃除（バネ/距離どっちも）
+            // 既存Jointを掃除
             var oldS = playerRb.GetComponent<SpringJoint2D>();
             if (oldS) Destroy(oldS);
 
             var oldD = playerRb.GetComponent<DistanceJoint2D>();
             if (oldD) Destroy(oldD);
 
-            // ロープ長を固定して“振り子”にする
+            // プレイヤーは「当たったその点」にぶら下がる
             var joint = playerRb.gameObject.AddComponent<DistanceJoint2D>();
-            joint.connectedBody = this.rb;
+            joint.connectedBody = null;
+            joint.connectedAnchor = hitPoint;
             joint.autoConfigureDistance = false;
             joint.distance = ropeLength;
-
-            // 弧を描くために距離固定（maxDistanceOnlyだと押し戻しが弱くなる）
             joint.maxDistanceOnly = false;
-
             joint.enableCollision = false;
 
             return;
@@ -161,11 +192,7 @@ public class RopeHead : MonoBehaviour
             var enemy = other.GetComponentInParent<Enemy>();
             if (enemy == null) return;
 
-            // Mawaru13はスタン中のみ掴める
-            if (mawaruController != null && mawaruOnlyGrabWhenStunned)
-            {
-                if (!IsEnemyStunnedForMawaru(enemy)) return;
-            }
+            if (!CanMawaruGrabEnemy(enemy)) return;
 
             grabbedRb = other.attachedRigidbody;
             if (grabbedRb == null) return;
@@ -227,26 +254,16 @@ public class RopeHead : MonoBehaviour
     {
         if (grabbedRb == null) return false;
 
-        // Mawaru13はスタン中のみ投げれる
-        if (mawaruController != null && mawaruOnlyGrabWhenStunned)
-        {
-            if (grabbedEnemy == null) return false;
-            if (!IsEnemyStunnedForMawaru(grabbedEnemy)) return false;
-        }
-
         Vector2 n = dir.sqrMagnitude < 0.0001f ? Vector2.right : dir.normalized;
 
-        // 少し離す
         Vector2 sepPos = playerRb.position + n * throwSeparation;
         grabbedRb.position = sepPos;
         grabbedRb.velocity = Vector2.zero;
         grabbedRb.angularVelocity = 0f;
 
-        // ★投げる瞬間に “スタン解除” して物理を殺さない
         if (grabbedStun != null) grabbedStun.ForceEndStun();
         else if (grabbedEnemy != null) grabbedEnemy.ClearShellStun();
 
-        // ★投げる準備：Dynamicに戻す（ここ大事）
         grabbedRb.bodyType = RigidbodyType2D.Dynamic;
         grabbedRb.simulated = true;
 
@@ -256,7 +273,6 @@ public class RopeHead : MonoBehaviour
             grabbedEnemy.BeginThrow();
         }
 
-        // 速度で投げる
         grabbedRb.velocity = n * throwPower;
 
         OwnerOnRopeReturned();
@@ -285,7 +301,6 @@ public class RopeHead : MonoBehaviour
             if (grabbedAIs[i]) grabbedAIs[i].enabled = true;
     }
 
-    // ===== Owner helpers =====
     Transform OwnerTransform()
     {
         if (playerController) return playerController.transform;

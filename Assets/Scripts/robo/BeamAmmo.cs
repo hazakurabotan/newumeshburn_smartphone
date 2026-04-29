@@ -86,4 +86,22 @@ public class BeamAmmo : MonoBehaviour
             if (owner) owner.OnBulletDestroyed();
         }
     }
+
+    public void SetAmmoDirect(int current, int max = -1, bool resetActiveShots = true)
+    {
+        if (max > 0)
+            maxAmmo = max;
+
+        if (maxAmmo <= 0)
+            maxAmmo = 1;
+
+        currentAmmo = Mathf.Clamp(current, 0, maxAmmo);
+
+        if (resetActiveShots)
+            activeShots = 0;
+
+        regenTimer = 0f;
+        OnAmmoChanged?.Invoke(currentAmmo, maxAmmo);
+    }
+
 }

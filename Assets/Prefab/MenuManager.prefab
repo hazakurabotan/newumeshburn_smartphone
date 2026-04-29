@@ -1,0 +1,148 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3398868350296247107
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3665587490131900477}
+  - component: {fileID: 4942383440907138959}
+  m_Layer: 0
+  m_Name: MenuManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3665587490131900477
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3398868350296247107}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 646.00214, y: 423.9789, z: -5.544913}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6106458649128094814}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4942383440907138959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3398868350296247107}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2792ee494ec066943b9d35cd8bdd7ffe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  girlsGearUIRoot: {fileID: 0}
+  startPage: {fileID: 0}
+  mixJuicePage: {fileID: 0}
+  stickerBookPage: {fileID: 0}
+  stickerPlacementPage: {fileID: 0}
+  mdDeskPage: {fileID: 0}
+  settingsPage: {fileID: 0}
+  optionPage: {fileID: 0}
+  inventoryPage: {fileID: 0}
+  mixJuicePageController: {fileID: 0}
+  startFirst: {fileID: 0}
+  mixJuiceFirst: {fileID: 0}
+  stickerBookFirst: {fileID: 0}
+  stickerPlacementFirst: {fileID: 0}
+  mdDeskFirst: {fileID: 0}
+  settingsFirst: {fileID: 0}
+  optionFirst: {fileID: 0}
+  inventoryFirst: {fileID: 0}
+  optionButton: {fileID: 0}
+  inventoryButton: {fileID: 0}
+  stageBackButton: {fileID: 0}
+  titleBackButton: {fileID: 0}
+  bgmSlider: {fileID: 0}
+  seSlider: {fileID: 0}
+  fullScreenButton: {fileID: 0}
+  windowedModeButton: {fileID: 0}
+  optionBackButton: {fileID: 0}
+  displayModeValueText: {fileID: 0}
+  inventoryBackButton: {fileID: 0}
+  miracleDeskListText: {fileID: 0}
+  recoveryItemListText: {fileID: 0}
+  medalCountText: {fileID: 0}
+  juiceListText: {fileID: 0}
+  playerInput: {fileID: 0}
+  gameplayActionMapName: Player
+  uiActionMapName: UI
+  pauseGameWhileUIOpen: 1
+  gameplayMapsToRestore:
+  - Player
+  - Mawaru
+  stageSelectSceneName: StageSelect
+  titleSceneName: Title
+  audioMixer: {fileID: 0}
+  bgmVolumeParameter: BGMVolume
+  seVolumeParameter: SEVolume
+  debugMiracleDeskNames: []
+  debugRecoveryItemNames: []
+  debugMedalCount: 0
+  debugJuiceNames: []
+--- !u!1 &9210852379634083367
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6106458649128094814}
+  - component: {fileID: 6593171138019046625}
+  m_Layer: 0
+  m_Name: maskManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6106458649128094814
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9210852379634083367}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3665587490131900477}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6593171138019046625
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9210852379634083367}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4fe3faf22fcfcf4f976763ebcb9e7f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  owned:
+  - id: 1
+    icon: {fileID: 21300000, guid: 06b325d8ebb2400458e4770e42c8375b, type: 3}
+  - id: 2
+    icon: {fileID: 21300000, guid: 5ed9c8e822094aa42b06ad3c1f12b95b, type: 3}
+  - id: 3
+    icon: {fileID: 21300000, guid: 920dc124a7503f14c9c08144f7149d6d, type: 3}
+  prefsKey: EQUIPPED_MASK_ID

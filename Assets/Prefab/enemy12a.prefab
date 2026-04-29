@@ -154,6 +154,9 @@ GameObject:
   - component: {fileID: 1999256502436923781}
   - component: {fileID: 5366929349647222813}
   - component: {fileID: -2946209950809722208}
+  - component: {fileID: 5682423618194108484}
+  - component: {fileID: -4284075050714082532}
+  - component: {fileID: 3633376677104872863}
   m_Layer: 13
   m_Name: enemy12a
   m_TagString: Enemy
@@ -244,7 +247,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDrag: 0
   m_AngularDrag: 0.05
-  m_GravityScale: 0
+  m_GravityScale: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -255,7 +258,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 1
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!114 &4129106222934608155
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -268,29 +271,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 611801031ad7d3b44bf5716056a9a935, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spriteDefaultFacesRight: 0
   spriteRenderer: {fileID: 8447869194394213629}
-  mouthSprites:
+  groundCheck: {fileID: 0}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  moveSpeed: 3.5
+  moveRight: 0
+  wallCheck: {fileID: 0}
+  wallCheckRadius: 0.08
+  wallLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  walkSprites:
   - {fileID: 21300000, guid: 52b4146f99cdf32469b39eca3df6a868, type: 3}
   - {fileID: 21300000, guid: 680d72c7bc94b1d4fb27b052908cc039, type: 3}
   - {fileID: 21300000, guid: 18708a99c72274640871b51e056c4e59, type: 3}
-  - {fileID: 21300000, guid: 9f235b4b840850c4cad7b4f052522cd6, type: 3}
+  - {fileID: 21300000, guid: 18708a99c72274640871b51e056c4e59, type: 3}
   - {fileID: 21300000, guid: eb6e5b9fef3b3f74791c17abf9705bde, type: 3}
-  moveSpeed: 3.5
-  moveRight: 0
-  faceMoveDirection: 1
-  lockYVelocity: 1
-  slowFps: 3
-  contactDamage: 1
-  hitCooldown: 0.5
-  playerTag: Player
-  knockbackForce: 7
-  knockbackUp: 1.5
-  stunTime: 0.15
-  despawnDelay: 1
-  wallLayers:
-    serializedVersion: 2
-    m_Bits: 136
+  animFps: 6
+  turnOnAnySolidSideCollision: 1
+  wallTurnCooldown: 0.08
+  depenetrationPush: 0.03
 --- !u!70 &5455291805499447038
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -338,11 +340,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eb3f9021f4ca9c4dbe01e15f9049b7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hp: 3
-  maxHp: 3
+  hp: 5
+  maxHp: 5
   isGrabbed: 0
   isFlying: 0
   hpBar: {fileID: 5366929349647222813}
+  deathEffectPrefab: {fileID: 3334866903324842887, guid: f763a4fede8bfbe45aa79c14c1b1d6eb, type: 3}
+  deathEffectLife: 1.2
+  enableItemDrop: 0
+  dropPrefabs: []
+  dropChance: 1
+  dropMinCount: 1
+  dropMaxCount: 1
+  dropScatterRadius: 0.25
+  dropImpulse: {x: 1.5, y: 2}
+  dropInheritVelocity: 1
   thrownHitLayers:
     serializedVersion: 2
     m_Bits: 24
@@ -351,11 +363,14 @@ MonoBehaviour:
     m_Bits: 8
   reboundMul: 1.7
   minReboundSpeed: 10
+  minUpSpeedOnGround: 4
   minAirTimeAfterBounce: 0.06
   groundCheckRadius: 0.08
   depenetrationSkin: 0.03
   stuckSpeedThreshold: 1
   shellStunDefaultSeconds: 1
+  thrownDamage: 1
+  collisionDamageToOther: 1
 --- !u!114 &5366929349647222813
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -382,6 +397,71 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   defaultStunSeconds: 2
+--- !u!114 &5682423618194108484
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8510536675225664214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8df3e8601eb0d6c47ad47297f323f857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  thrownLayerName: EnemyThrown
+  enemyLayers:
+    serializedVersion: 2
+    m_Bits: 8192
+  damageToOther: 2
+  damageToSelf: 0
+  hitCooldown: 0.08
+  reboundMul: 1.2
+  minReboundSpeed: 6
+  minUpSpeedOnGround: 4
+  pushOutDistance: 0.06
+  ignoreCollisionSeconds: 0.12
+  disableOtherAITemporarily: 1
+  disableOtherAISeconds: 0.1
+--- !u!114 &-4284075050714082532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8510536675225664214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 632ceb62e20c7d244869a9301fa3a0e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  normalLayerName: Enemy
+  thrownLayerName: EnemyThrown
+  applyToChildren: 1
+  flyingNames:
+  - isFlying
+  - IsFlying
+  - flying
+  - IsThrown
+  - isThrown
+--- !u!114 &3633376677104872863
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8510536675225664214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 214194b2103e23944889ebce06462c06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  coinPrefab: {fileID: 4401374367486816390, guid: afe7f32a3e2ffcc449e5f1ed0d2cc61b, type: 3}
+  healPrefab: {fileID: 8514312769144168060, guid: fab7ccfb09d4a6b448bef6b31db7fe90, type: 3}
+  dropChance: 1
+  healDropRate: 0.5
+  spawnOffset: {x: 0, y: 0.15}
+  scatterX: 0.25
 --- !u!1001 &6045468366753256041
 PrefabInstance:
   m_ObjectHideFlags: 0

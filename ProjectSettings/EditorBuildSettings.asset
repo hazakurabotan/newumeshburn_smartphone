@@ -12,11 +12,29 @@ EditorBuildSettings:
     path: Assets/Scenes/Opening.unity
     guid: b0ef9c1a40aaa7c468e32126b379ff35
   - enabled: 1
+    path: Assets/Scenes/StageSelect.unity
+    guid: 2e6539b2f4fd18b4cb7f31815adb2c05
+  - enabled: 1
     path: Assets/Scenes/CharacterSelect.unity
     guid: 36c9fedbf4686f6458473dc8614fafe6
   - enabled: 1
+    path: Assets/Scenes/HowToPlay2.unity
+    guid: 7f2d9d03c90800149b369ad2e78f56d4
+  - enabled: 1
     path: Assets/Scenes/Stage1 1.unity
     guid: 1163bb1bb2c239345bbcb7388b07c367
+  - enabled: 1
+    path: Assets/Scenes/Stage1 2.unity
+    guid: 3bcb8f3073b85e141830b4fd140fd749
+  - enabled: 1
+    path: Assets/Scenes/Stage1 4.unity
+    guid: 3873a1674e2c79948a5e538f5c8b30c2
+  - enabled: 1
+    path: Assets/Scenes/Stage1 5.unity
+    guid: 276e6f132651fe44198d906837879537
+  - enabled: 1
+    path: Assets/Scenes/ImpactRunScene.unity
+    guid: 663ec58e4c4dc4d469702dc0642c5fac
   - enabled: 1
     path: Assets/Scenes/robobattle.unity
     guid: 7c09136327d9912498f5bb3e46af1ef8

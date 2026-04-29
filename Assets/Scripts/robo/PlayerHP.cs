@@ -48,6 +48,19 @@ public class PlayerHP : MonoBehaviour
         if (currentHP != before) Notify();
     }
 
+    public void SetHPDirect(int current, int max = -1)
+    {
+        if (max > 0)
+            maxHP = max;
+
+        if (maxHP <= 0)
+            maxHP = 1;
+
+        currentHP = Mathf.Clamp(current, 0, maxHP);
+        Notify();
+    }
+
+
     private void Notify()
     {
         OnHPChanged?.Invoke(currentHP, maxHP);

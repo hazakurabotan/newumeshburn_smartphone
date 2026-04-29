@@ -43,24 +43,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Summon",
-                    "type": "Button",
-                    "id": "328cc40c-371d-4938-b82d-b11b96654989",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Switch",
-                    "type": "Button",
-                    "id": "5fa85bce-35e5-43c9-87b9-a5ab09dc422e",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Railgun",
                     "type": "Button",
                     "id": "3c3ccbd3-906b-4262-bb03-3d236166a5dc",
@@ -124,17 +106,6 @@
                 },
                 {
                     "name": "",
-                    "id": "a239ceef-2d04-44f2-b47f-6c9f939ad329",
-                    "path": "<Gamepad>/rightShoulder",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Summon",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "f207a99e-a28a-4738-82ba-1b000d886e43",
                     "path": "<Gamepad>/leftStick",
                     "interactions": "",
@@ -152,17 +123,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "Move",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "1af32e69-afb4-4f6b-89c9-4597114e22d6",
-                    "path": "<Gamepad>/leftTrigger",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Switch",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -438,16 +398,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Switch",
-                    "type": "Button",
-                    "id": "40a49803-0a42-4ac4-adde-1cae0c0bf789",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Weapon",
+                    "name": "drink",
                     "type": "Button",
                     "id": "fbf29918-3dc4-483d-8e3c-0af776b13210",
                     "expectedControlType": "",
@@ -534,23 +485,12 @@
                 },
                 {
                     "name": "",
-                    "id": "35c09a56-e0e9-4b72-adc5-f73db3de786f",
-                    "path": "<Gamepad>/leftTrigger",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Switch",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "b942f488-91b8-4e99-9b89-3279ffefa094",
                     "path": "<Gamepad>/rightTrigger",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Weapon",
+                    "action": "drink",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -701,6 +641,114 @@
                     "processors": "",
                     "groups": "",
                     "action": "RightGuard",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "ImpactRun",
+            "id": "8af5df07-342d-4c0b-9bc1-42d8ac66dff8",
+            "actions": [
+                {
+                    "name": "Move",
+                    "type": "Value",
+                    "id": "72776086-4db6-46a7-accf-84fb5c584484",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Move2",
+                    "type": "Value",
+                    "id": "1277ba11-b43e-4e4c-9be4-d2a6c8b5f905",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Jump",
+                    "type": "Button",
+                    "id": "8ec193dd-8fc4-4381-9d5c-ab217cbbb16a",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Attack",
+                    "type": "Button",
+                    "id": "4fd3d38d-7320-4975-bc6a-9ab4ceb3588d",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Dash",
+                    "type": "Button",
+                    "id": "e232596d-1bf9-4723-beb9-f5de32674334",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "c60d011a-2564-40ad-b1d9-5fcc25125ae6",
+                    "path": "<Gamepad>/dpad",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b2ecd5fa-6add-4868-bbcc-fa9ad827f49c",
+                    "path": "<Gamepad>/leftStick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move2",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "973da2fb-d9f5-4a95-8249-8720a9fa7d66",
+                    "path": "<Gamepad>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "6cf6cffe-2eaf-4005-a6fb-b26367960640",
+                    "path": "<Gamepad>/buttonWest",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Attack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "bd19efe4-3cd1-4201-ba15-4a83596d52b5",
+                    "path": "<Gamepad>/buttonEast",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Dash",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

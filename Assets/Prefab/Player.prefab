@@ -62,62 +62,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 9009474615085610478}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &3198279519838480504
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6405129227950523324}
-  - component: {fileID: 7835915767800730840}
-  m_Layer: 0
-  m_Name: 'CharacterSwitchManager '
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &6405129227950523324
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3198279519838480504}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.7317474, y: 0.5940583, z: 0.01668021}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 9009474615085610478}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7835915767800730840
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3198279519838480504}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8803d6e1f2bf6a6439d783c09d20962b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mawaru: {fileID: 0}
-  player: {fileID: 6611244966839157427}
-  mawaruInput: {fileID: 0}
-  playerInput: {fileID: 3715066158490007571}
-  simpleCam: {fileID: 0}
-  mainCam: {fileID: 0}
-  hpBar: {fileID: 0}
-  startAsMawaru: 1
-  snapAtSwitch: 1
-  copyVelocity: 1
-  zKeepTo: 0
-  hpBinder: {fileID: 0}
 --- !u!1 &3315595117534700997
 GameObject:
   m_ObjectHideFlags: 0
@@ -137,6 +81,7 @@ GameObject:
   - component: {fileID: 158573305089694368}
   - component: {fileID: 3715066158490007571}
   - component: {fileID: 8481310814294046398}
+  - component: {fileID: 4287378458715577146}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -157,7 +102,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 6405129227950523324}
   - {fileID: 8555366558716911409}
   - {fileID: 1678817567040071155}
   - {fileID: 3433407867761767993}
@@ -312,6 +256,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerShootScript: {fileID: 7507160466738546352}
+  playerBombThrowScript: {fileID: 4287378458715577146}
   joystick: {fileID: 0}
   speed: 3
   jump: 9
@@ -324,7 +269,7 @@ MonoBehaviour:
   cutInImage: {fileID: 0}
   railgunCutinSprite: {fileID: 21300000, guid: d6cdd0ae97b235c48b3c4c3e0c98bed0, type: 3}
   railgunAudioSource: {fileID: 0}
-  railgunVoiceClip: {fileID: 8300000, guid: ecb46a82f76cebb40ae2fe03aa30b7fe, type: 3}
+  railgunVoiceClip: {fileID: 8300000, guid: 5834a5be26fa69546b94919d1f02bde3, type: 3}
   laserPrefab: {fileID: 5688605582872764671, guid: 8f1a80d37fa239a43bf3f5a494944e71, type: 3}
   wallJumpPowerX: 8.42
   wallJumpPowerY: 12
@@ -339,8 +284,6 @@ MonoBehaviour:
   invincibleTime: 3
   afterImagePrefab: {fileID: 1931263073724592993, guid: a388e8f674c1e5d479246b11be724384, type: 3}
   afterImageInterval: 0.05
-  summon01: {fileID: 749186282455836594, guid: 8ed415bd4e12cc54dbaf289229e18c26, type: 3}
-  firePoint: {fileID: 8555366558716911409}
   audioSource: {fileID: 158573305089694368}
   deathClip: {fileID: 8300000, guid: 1a51af09bd88ae74aa175607c3ebaec9, type: 3}
   hpBar: {fileID: 0}
@@ -352,20 +295,30 @@ MonoBehaviour:
   jumpAnime: PlayerJump
   goalAnime: PlayerGoal
   deadAnime: PlayerOver
-  punchHitbox: {fileID: 8659287836614671140}
   PlayerAnime: {fileID: 9100000, guid: b2cc5708604b714468c0c824d588bdd0, type: 2}
+  shotAnime: PlayerShot
+  damageAnime: PlayerDamage
+  shotLockFallback: 0.12
+  damageLockFallback: 0.25
   itemPanelObj: {fileID: 0}
   pausePanelObj: {fileID: 0}
   score: 0
   bulletDamage: 1
   climbSpeed: 3
+  knockbackForce: {x: 7, y: 4}
+  knockbackDuration: 0.2
   seSource: {fileID: 158573305089694368}
   shootSE: {fileID: 8300000, guid: b2e72e646cbd4534e977e1d8e1891bee, type: 3}
-  ropeHeadPrefab: {fileID: 5389804740837243101, guid: 9a3e17d3d27d3d94fba33ff6ca9142c9, type: 3}
-  ropeSpeed: 15
-  ropeLength: 2
-  ropeRenderer: {fileID: 8481310814294046398}
-  hangGravity: 10
+  shootVoices:
+  - {fileID: 8300000, guid: 2608183953d8bed4fb1eb73a166b62dc, type: 3}
+  - {fileID: 8300000, guid: 64af202936f2fc44d8abdbc65b957bd1, type: 3}
+  - {fileID: 8300000, guid: b406ad796a32c23479b89431fda850b6, type: 3}
+  - {fileID: 8300000, guid: ebf4c7dc01eb2ff4bbb00c703b952129, type: 3}
+  voiceVolume: 0.568
+  voiceMinInterval: 0.05
+  damageVoice: {fileID: 8300000, guid: 0b6ae6b9a6b71254da05d8052b01904e, type: 3}
+  damageVoiceVolume: 0.581
+  damageVoiceMinInterval: 0.2
 --- !u!114 &7507160466738546352
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -381,11 +334,12 @@ MonoBehaviour:
   bulletPrefab: {fileID: 7245067081621203849, guid: 00191b8f27c4a1043a649e4998121e18, type: 3}
   firePoint: {fileID: 8555366558716911409}
   bulletSpeed: 5
-  chargeTime: 0
-  isCharging: 0
   requiredCharge: 2
+  isCharging: 0
+  chargeTime: 0
   maxShots: 3
   reloadTime: 1
+  shotTriggerName: Shot
 --- !u!114 &4956953519680160114
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -418,7 +372,7 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 1
-  MinDistance: 0.8731334
+  MinDistance: 1.0988815
   MaxDistance: 500
   Pan2D: 0
   rolloffMode: 0
@@ -585,38 +539,6 @@ MonoBehaviour:
     m_ActionName: Player/Rope[/XInputControllerWindows/buttonWest]
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 6611244966839157427}
-        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
-        m_MethodName: OnSummon
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 328cc40c-371d-4938-b82d-b11b96654989
-    m_ActionName: Player/Summon[/XInputControllerWindows/rightShoulder]
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6611244966839157427}
-        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
-        m_MethodName: OnSwitch
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 5fa85bce-35e5-43c9-87b9-a5ab09dc422e
-    m_ActionName: Player/ItemPanel[/XInputControllerWindows/leftShoulder]
-  - m_PersistentCalls:
-      m_Calls:
       - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: 
         m_MethodName: 
@@ -701,10 +623,6 @@ MonoBehaviour:
     m_ActionName: Mawaru/Menu[/XInputControllerWindows/select]
   - m_PersistentCalls:
       m_Calls: []
-    m_ActionId: 40a49803-0a42-4ac4-adde-1cae0c0bf789
-    m_ActionName: Mawaru/Switch
-  - m_PersistentCalls:
-      m_Calls: []
     m_ActionId: 322ae691-f5ff-40ea-8f2a-599040da2a2e
     m_ActionName: RoboBattle/MoveCursor[/XInputControllerWindows/leftStick,/XInputControllerWindows/dpad]
   - m_PersistentCalls:
@@ -731,6 +649,34 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: fbf29918-3dc4-483d-8e3c-0af776b13210
     m_ActionName: Mawaru/Weapon[/XInputControllerWindows/rightTrigger]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: adaef9c1-82f0-4576-8e24-00220ff1ffa4
+    m_ActionName: Player/Interact[/XInputControllerWindows/buttonEast]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: dab7e3eb-2dbd-47d4-ae88-4509801970db
+    m_ActionName: Mawaru/Interact[/XInputControllerWindows/buttonEast]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 72776086-4db6-46a7-accf-84fb5c584484
+    m_ActionName: ImpactRun/Move[/XInputControllerWindows/dpad]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 1277ba11-b43e-4e4c-9be4-d2a6c8b5f905
+    m_ActionName: ImpactRun/Move2[/XInputControllerWindows/leftStick]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 8ec193dd-8fc4-4381-9d5c-ab217cbbb16a
+    m_ActionName: ImpactRun/Jump[/XInputControllerWindows/buttonSouth]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 4fd3d38d-7320-4975-bc6a-9ab4ceb3588d
+    m_ActionName: ImpactRun/Attack[/XInputControllerWindows/buttonWest]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: e232596d-1bf9-4723-beb9-f5de32674334
+    m_ActionName: ImpactRun/Dash[/XInputControllerWindows/buttonEast]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -840,6 +786,32 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
+--- !u!114 &4287378458715577146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3315595117534700997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40a392bcc78549749a9dbd3cc067178e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bombPrefab: {fileID: 3899383469088215075, guid: 0bd94af35c8420c46aed8ec304053a0d, type: 3}
+  throwPoint: {fileID: 8555366558716911409}
+  bombCooldown: 0.35
+  throwSpeedX: 4.8
+  throwSpeedY: 5.2
+  spawnOffsetX: 0.28
+  spawnOffsetY: 0.18
+  bombDamage: 1
+  explosionRadius: 0.9
+  fuseTime: 2
+  explosionEffectPrefab: {fileID: 4327788296557630926, guid: dc04a4ea86794364cb87cb6b5deb6d38, type: 3}
+  explosionEffectLife: 0.7
+  seSource: {fileID: 0}
+  throwSe: {fileID: 0}
 --- !u!1 &9209134253125302717
 GameObject:
   m_ObjectHideFlags: 0

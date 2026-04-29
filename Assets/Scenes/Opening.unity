@@ -380,7 +380,7 @@ MonoBehaviour:
     voice: {fileID: 0}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
-  nextSceneName: CharacterSelect
+  nextSceneName: StageSelect
 --- !u!1 &519407443
 GameObject:
   m_ObjectHideFlags: 0

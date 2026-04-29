@@ -129,24 +129,6 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Summon"",
-                    ""type"": ""Button"",
-                    ""id"": ""328cc40c-371d-4938-b82d-b11b96654989"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Switch"",
-                    ""type"": ""Button"",
-                    ""id"": ""5fa85bce-35e5-43c9-87b9-a5ab09dc422e"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""Railgun"",
                     ""type"": ""Button"",
                     ""id"": ""3c3ccbd3-906b-4262-bb03-3d236166a5dc"",
@@ -210,17 +192,6 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""a239ceef-2d04-44f2-b47f-6c9f939ad329"",
-                    ""path"": ""<Gamepad>/rightShoulder"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Summon"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""f207a99e-a28a-4738-82ba-1b000d886e43"",
                     ""path"": ""<Gamepad>/leftStick"",
                     ""interactions"": """",
@@ -238,17 +209,6 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Move"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""1af32e69-afb4-4f6b-89c9-4597114e22d6"",
-                    ""path"": ""<Gamepad>/leftTrigger"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Switch"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -524,16 +484,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Switch"",
-                    ""type"": ""Button"",
-                    ""id"": ""40a49803-0a42-4ac4-adde-1cae0c0bf789"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Weapon"",
+                    ""name"": ""drink"",
                     ""type"": ""Button"",
                     ""id"": ""fbf29918-3dc4-483d-8e3c-0af776b13210"",
                     ""expectedControlType"": """",
@@ -620,23 +571,12 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""35c09a56-e0e9-4b72-adc5-f73db3de786f"",
-                    ""path"": ""<Gamepad>/leftTrigger"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Switch"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""b942f488-91b8-4e99-9b89-3279ffefa094"",
                     ""path"": ""<Gamepad>/rightTrigger"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Weapon"",
+                    ""action"": ""drink"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -791,6 +731,114 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""ImpactRun"",
+            ""id"": ""8af5df07-342d-4c0b-9bc1-42d8ac66dff8"",
+            ""actions"": [
+                {
+                    ""name"": ""Move"",
+                    ""type"": ""Value"",
+                    ""id"": ""72776086-4db6-46a7-accf-84fb5c584484"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Move2"",
+                    ""type"": ""Value"",
+                    ""id"": ""1277ba11-b43e-4e4c-9be4-d2a6c8b5f905"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Jump"",
+                    ""type"": ""Button"",
+                    ""id"": ""8ec193dd-8fc4-4381-9d5c-ab217cbbb16a"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Attack"",
+                    ""type"": ""Button"",
+                    ""id"": ""4fd3d38d-7320-4975-bc6a-9ab4ceb3588d"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Dash"",
+                    ""type"": ""Button"",
+                    ""id"": ""e232596d-1bf9-4723-beb9-f5de32674334"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""c60d011a-2564-40ad-b1d9-5fcc25125ae6"",
+                    ""path"": ""<Gamepad>/dpad"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b2ecd5fa-6add-4868-bbcc-fa9ad827f49c"",
+                    ""path"": ""<Gamepad>/leftStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move2"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""973da2fb-d9f5-4a95-8249-8720a9fa7d66"",
+                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""6cf6cffe-2eaf-4005-a6fb-b26367960640"",
+                    ""path"": ""<Gamepad>/buttonWest"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Attack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bd19efe4-3cd1-4201-ba15-4a83596d52b5"",
+                    ""path"": ""<Gamepad>/buttonEast"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Dash"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": []
@@ -801,8 +849,6 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
         m_Player_Shoot = m_Player.FindAction("Shoot", throwIfNotFound: true);
         m_Player_Rope = m_Player.FindAction("Rope", throwIfNotFound: true);
-        m_Player_Summon = m_Player.FindAction("Summon", throwIfNotFound: true);
-        m_Player_Switch = m_Player.FindAction("Switch", throwIfNotFound: true);
         m_Player_Railgun = m_Player.FindAction("Railgun", throwIfNotFound: true);
         m_Player_Menu = m_Player.FindAction("Menu", throwIfNotFound: true);
         m_Player_Interact = m_Player.FindAction("Interact", throwIfNotFound: true);
@@ -825,8 +871,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         m_Mawaru_Punch = m_Mawaru.FindAction("Punch", throwIfNotFound: true);
         m_Mawaru_Rope = m_Mawaru.FindAction("Rope", throwIfNotFound: true);
         m_Mawaru_Menu = m_Mawaru.FindAction("Menu", throwIfNotFound: true);
-        m_Mawaru_Switch = m_Mawaru.FindAction("Switch", throwIfNotFound: true);
-        m_Mawaru_Weapon = m_Mawaru.FindAction("Weapon", throwIfNotFound: true);
+        m_Mawaru_drink = m_Mawaru.FindAction("drink", throwIfNotFound: true);
         m_Mawaru_Interact = m_Mawaru.FindAction("Interact", throwIfNotFound: true);
         // RoboBattle
         m_RoboBattle = asset.FindActionMap("RoboBattle", throwIfNotFound: true);
@@ -836,6 +881,13 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         m_RoboBattle_RightPunch = m_RoboBattle.FindAction("RightPunch", throwIfNotFound: true);
         m_RoboBattle_LeftGuard = m_RoboBattle.FindAction("LeftGuard", throwIfNotFound: true);
         m_RoboBattle_RightGuard = m_RoboBattle.FindAction("RightGuard", throwIfNotFound: true);
+        // ImpactRun
+        m_ImpactRun = asset.FindActionMap("ImpactRun", throwIfNotFound: true);
+        m_ImpactRun_Move = m_ImpactRun.FindAction("Move", throwIfNotFound: true);
+        m_ImpactRun_Move2 = m_ImpactRun.FindAction("Move2", throwIfNotFound: true);
+        m_ImpactRun_Jump = m_ImpactRun.FindAction("Jump", throwIfNotFound: true);
+        m_ImpactRun_Attack = m_ImpactRun.FindAction("Attack", throwIfNotFound: true);
+        m_ImpactRun_Dash = m_ImpactRun.FindAction("Dash", throwIfNotFound: true);
     }
 
     ~@PlayerControls()
@@ -845,6 +897,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_Dialog.enabled, "This will cause a leak and performance issues, PlayerControls.Dialog.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Mawaru.enabled, "This will cause a leak and performance issues, PlayerControls.Mawaru.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_RoboBattle.enabled, "This will cause a leak and performance issues, PlayerControls.RoboBattle.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_ImpactRun.enabled, "This will cause a leak and performance issues, PlayerControls.ImpactRun.Disable() has not been called.");
     }
 
     /// <summary>
@@ -924,8 +977,6 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Jump;
     private readonly InputAction m_Player_Shoot;
     private readonly InputAction m_Player_Rope;
-    private readonly InputAction m_Player_Summon;
-    private readonly InputAction m_Player_Switch;
     private readonly InputAction m_Player_Railgun;
     private readonly InputAction m_Player_Menu;
     private readonly InputAction m_Player_Interact;
@@ -956,14 +1007,6 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Rope".
         /// </summary>
         public InputAction @Rope => m_Wrapper.m_Player_Rope;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/Summon".
-        /// </summary>
-        public InputAction @Summon => m_Wrapper.m_Player_Summon;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/Switch".
-        /// </summary>
-        public InputAction @Switch => m_Wrapper.m_Player_Switch;
         /// <summary>
         /// Provides access to the underlying input action "Player/Railgun".
         /// </summary>
@@ -1014,12 +1057,6 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @Rope.started += instance.OnRope;
             @Rope.performed += instance.OnRope;
             @Rope.canceled += instance.OnRope;
-            @Summon.started += instance.OnSummon;
-            @Summon.performed += instance.OnSummon;
-            @Summon.canceled += instance.OnSummon;
-            @Switch.started += instance.OnSwitch;
-            @Switch.performed += instance.OnSwitch;
-            @Switch.canceled += instance.OnSwitch;
             @Railgun.started += instance.OnRailgun;
             @Railgun.performed += instance.OnRailgun;
             @Railgun.canceled += instance.OnRailgun;
@@ -1052,12 +1089,6 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @Rope.started -= instance.OnRope;
             @Rope.performed -= instance.OnRope;
             @Rope.canceled -= instance.OnRope;
-            @Summon.started -= instance.OnSummon;
-            @Summon.performed -= instance.OnSummon;
-            @Summon.canceled -= instance.OnSummon;
-            @Switch.started -= instance.OnSwitch;
-            @Switch.performed -= instance.OnSwitch;
-            @Switch.canceled -= instance.OnSwitch;
             @Railgun.started -= instance.OnRailgun;
             @Railgun.performed -= instance.OnRailgun;
             @Railgun.canceled -= instance.OnRailgun;
@@ -1367,8 +1398,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Mawaru_Punch;
     private readonly InputAction m_Mawaru_Rope;
     private readonly InputAction m_Mawaru_Menu;
-    private readonly InputAction m_Mawaru_Switch;
-    private readonly InputAction m_Mawaru_Weapon;
+    private readonly InputAction m_Mawaru_drink;
     private readonly InputAction m_Mawaru_Interact;
     /// <summary>
     /// Provides access to input actions defined in input action map "Mawaru".
@@ -1402,13 +1432,9 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Menu => m_Wrapper.m_Mawaru_Menu;
         /// <summary>
-        /// Provides access to the underlying input action "Mawaru/Switch".
+        /// Provides access to the underlying input action "Mawaru/drink".
         /// </summary>
-        public InputAction @Switch => m_Wrapper.m_Mawaru_Switch;
-        /// <summary>
-        /// Provides access to the underlying input action "Mawaru/Weapon".
-        /// </summary>
-        public InputAction @Weapon => m_Wrapper.m_Mawaru_Weapon;
+        public InputAction @drink => m_Wrapper.m_Mawaru_drink;
         /// <summary>
         /// Provides access to the underlying input action "Mawaru/Interact".
         /// </summary>
@@ -1454,12 +1480,9 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @Menu.started += instance.OnMenu;
             @Menu.performed += instance.OnMenu;
             @Menu.canceled += instance.OnMenu;
-            @Switch.started += instance.OnSwitch;
-            @Switch.performed += instance.OnSwitch;
-            @Switch.canceled += instance.OnSwitch;
-            @Weapon.started += instance.OnWeapon;
-            @Weapon.performed += instance.OnWeapon;
-            @Weapon.canceled += instance.OnWeapon;
+            @drink.started += instance.OnDrink;
+            @drink.performed += instance.OnDrink;
+            @drink.canceled += instance.OnDrink;
             @Interact.started += instance.OnInteract;
             @Interact.performed += instance.OnInteract;
             @Interact.canceled += instance.OnInteract;
@@ -1489,12 +1512,9 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @Menu.started -= instance.OnMenu;
             @Menu.performed -= instance.OnMenu;
             @Menu.canceled -= instance.OnMenu;
-            @Switch.started -= instance.OnSwitch;
-            @Switch.performed -= instance.OnSwitch;
-            @Switch.canceled -= instance.OnSwitch;
-            @Weapon.started -= instance.OnWeapon;
-            @Weapon.performed -= instance.OnWeapon;
-            @Weapon.canceled -= instance.OnWeapon;
+            @drink.started -= instance.OnDrink;
+            @drink.performed -= instance.OnDrink;
+            @drink.canceled -= instance.OnDrink;
             @Interact.started -= instance.OnInteract;
             @Interact.performed -= instance.OnInteract;
             @Interact.canceled -= instance.OnInteract;
@@ -1682,6 +1702,146 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="RoboBattleActions" /> instance referencing this action map.
     /// </summary>
     public RoboBattleActions @RoboBattle => new RoboBattleActions(this);
+
+    // ImpactRun
+    private readonly InputActionMap m_ImpactRun;
+    private List<IImpactRunActions> m_ImpactRunActionsCallbackInterfaces = new List<IImpactRunActions>();
+    private readonly InputAction m_ImpactRun_Move;
+    private readonly InputAction m_ImpactRun_Move2;
+    private readonly InputAction m_ImpactRun_Jump;
+    private readonly InputAction m_ImpactRun_Attack;
+    private readonly InputAction m_ImpactRun_Dash;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "ImpactRun".
+    /// </summary>
+    public struct ImpactRunActions
+    {
+        private @PlayerControls m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public ImpactRunActions(@PlayerControls wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "ImpactRun/Move".
+        /// </summary>
+        public InputAction @Move => m_Wrapper.m_ImpactRun_Move;
+        /// <summary>
+        /// Provides access to the underlying input action "ImpactRun/Move2".
+        /// </summary>
+        public InputAction @Move2 => m_Wrapper.m_ImpactRun_Move2;
+        /// <summary>
+        /// Provides access to the underlying input action "ImpactRun/Jump".
+        /// </summary>
+        public InputAction @Jump => m_Wrapper.m_ImpactRun_Jump;
+        /// <summary>
+        /// Provides access to the underlying input action "ImpactRun/Attack".
+        /// </summary>
+        public InputAction @Attack => m_Wrapper.m_ImpactRun_Attack;
+        /// <summary>
+        /// Provides access to the underlying input action "ImpactRun/Dash".
+        /// </summary>
+        public InputAction @Dash => m_Wrapper.m_ImpactRun_Dash;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_ImpactRun; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="ImpactRunActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(ImpactRunActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="ImpactRunActions" />
+        public void AddCallbacks(IImpactRunActions instance)
+        {
+            if (instance == null || m_Wrapper.m_ImpactRunActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_ImpactRunActionsCallbackInterfaces.Add(instance);
+            @Move.started += instance.OnMove;
+            @Move.performed += instance.OnMove;
+            @Move.canceled += instance.OnMove;
+            @Move2.started += instance.OnMove2;
+            @Move2.performed += instance.OnMove2;
+            @Move2.canceled += instance.OnMove2;
+            @Jump.started += instance.OnJump;
+            @Jump.performed += instance.OnJump;
+            @Jump.canceled += instance.OnJump;
+            @Attack.started += instance.OnAttack;
+            @Attack.performed += instance.OnAttack;
+            @Attack.canceled += instance.OnAttack;
+            @Dash.started += instance.OnDash;
+            @Dash.performed += instance.OnDash;
+            @Dash.canceled += instance.OnDash;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="ImpactRunActions" />
+        private void UnregisterCallbacks(IImpactRunActions instance)
+        {
+            @Move.started -= instance.OnMove;
+            @Move.performed -= instance.OnMove;
+            @Move.canceled -= instance.OnMove;
+            @Move2.started -= instance.OnMove2;
+            @Move2.performed -= instance.OnMove2;
+            @Move2.canceled -= instance.OnMove2;
+            @Jump.started -= instance.OnJump;
+            @Jump.performed -= instance.OnJump;
+            @Jump.canceled -= instance.OnJump;
+            @Attack.started -= instance.OnAttack;
+            @Attack.performed -= instance.OnAttack;
+            @Attack.canceled -= instance.OnAttack;
+            @Dash.started -= instance.OnDash;
+            @Dash.performed -= instance.OnDash;
+            @Dash.canceled -= instance.OnDash;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="ImpactRunActions.UnregisterCallbacks(IImpactRunActions)" />.
+        /// </summary>
+        /// <seealso cref="ImpactRunActions.UnregisterCallbacks(IImpactRunActions)" />
+        public void RemoveCallbacks(IImpactRunActions instance)
+        {
+            if (m_Wrapper.m_ImpactRunActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="ImpactRunActions.AddCallbacks(IImpactRunActions)" />
+        /// <seealso cref="ImpactRunActions.RemoveCallbacks(IImpactRunActions)" />
+        /// <seealso cref="ImpactRunActions.UnregisterCallbacks(IImpactRunActions)" />
+        public void SetCallbacks(IImpactRunActions instance)
+        {
+            foreach (var item in m_Wrapper.m_ImpactRunActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_ImpactRunActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="ImpactRunActions" /> instance referencing this action map.
+    /// </summary>
+    public ImpactRunActions @ImpactRun => new ImpactRunActions(this);
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Player" which allows adding and removing callbacks.
     /// </summary>
@@ -1717,20 +1877,6 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRope(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "Summon" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnSummon(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "Switch" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnSwitch(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "Railgun" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
@@ -1868,19 +2014,12 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnMenu(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Switch" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "drink" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnSwitch(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "Weapon" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnWeapon(InputAction.CallbackContext context);
+        void OnDrink(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "Interact" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
@@ -1938,5 +2077,48 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRightGuard(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "ImpactRun" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="ImpactRunActions.AddCallbacks(IImpactRunActions)" />
+    /// <seealso cref="ImpactRunActions.RemoveCallbacks(IImpactRunActions)" />
+    public interface IImpactRunActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "Move" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnMove(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Move2" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnMove2(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Jump" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnJump(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Attack" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnAttack(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Dash" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnDash(InputAction.CallbackContext context);
     }
 }

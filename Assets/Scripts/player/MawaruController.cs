@@ -50,11 +50,26 @@ public class MawaruController : MonoBehaviour
     public float hangDrag = 0.5f;
     public float hangJumpForce = 9f;
 
+    [Header("Auto Swing")]
+    [Tooltip("ぶら下がり中に自動で往復する最大角度")]
+    public float autoSwingMaxAngle = 55f;
+    [Tooltip("ぶら下がり開始直後に付ける初速")]
+    public float autoSwingStartKick = 2.5f;
+    [Tooltip("ジャンプ離脱時に現在速度へ上乗せする量")]
+    public float hangReleaseExtraSpeed = 1.5f;
+
     // ===== Double Jump (Carry Only) =====
     [Header("Double Jump (Carry Only)")]
     public bool enableCarryDoubleJump = true;
     public float secondJumpForce = 9f;
     public int carryMaxJumpCount = 2;
+
+    [Header("Juice Motion Unlock")]
+    public bool unlockDashByJuice = false;
+    public bool unlockSlideByJuice = false;
+    public bool unlockUpPunchByJuice = false;
+    public bool unlockDoubleJumpByJuice = false;
+    public bool unlockRocketPunchByJuice = false;
 
     int jumpCountUsed = 0;
     bool wasGrounded;
@@ -63,6 +78,28 @@ public class MawaruController : MonoBehaviour
     [Header("Punch - Hitbox (Animator Sync)")]
     public GameObject punchHitbox;
     public float punchCooldown = 0.20f;
+
+    [Header("Punch Reach (追加で伸ばす量)")]
+    public float jabExtend = 0.25f;
+    public float straightExtend = 0.85f;
+    public float upExtend = 0.75f;
+    public float upForward = 0.25f;
+
+    [Header("Punch Collider Size")]
+    public Vector2 jabBoxSize = new Vector2(0.9f, 0.6f);
+    public Vector2 straightBoxSize = new Vector2(1.5f, 0.6f);
+    public Vector2 upBoxSize = new Vector2(0.6f, 1.3f);
+
+    [Header("Punch Extend Curve (0-1 inside window)")]
+    [Range(0f, 1f)] public float punchOutEnd = 0.12f;
+    [Range(0f, 1f)] public float punchHoldEnd = 0.92f;
+
+    enum PunchKind { Jab, Straight, Up }
+    PunchKind currentPunchKind = PunchKind.Jab;
+
+    BoxCollider2D punchBox;
+    float punchNormT;
+    HitWindow01 punchCurrentWindow;
 
     [Header("Punch Voice")]
     public AudioSource punchVoiceSource;
@@ -84,17 +121,21 @@ public class MawaruController : MonoBehaviour
     }
 
     [Header("Hit windows (normalizedTime 0-1)")]
-    public HitWindow01 punch1Window = new HitWindow01 { start = 0.10f, end = 0.55f };
-    public HitWindow01 punch2Window = new HitWindow01 { start = 0.10f, end = 0.60f };
-    public HitWindow01 punch3Window = new HitWindow01 { start = 0.10f, end = 0.70f };
+    public HitWindow01 punch1Window = new HitWindow01 { start = 0.05f, end = 0.85f };
+    public HitWindow01 punch2Window = new HitWindow01 { start = 0.05f, end = 0.85f };
+    public HitWindow01 punch3Window = new HitWindow01 { start = 0.05f, end = 0.90f };
 
     float punchTimer;
     Collider2D punchCol;
-    SpriteRenderer punchSR;
     bool punchVisible;
     Vector3 punchLocalDefault;
     int comboStep = 0;
     bool wasInPunch;
+
+    // 押下中の二重反応防止
+    bool punchPressLatched = false;
+    // 上+パンチを押下時に使ったら、離した時の通常パンチを無効化
+    bool consumedPunchOnStarted = false;
 
     // ===== Rocket Punch (Charge) =====
     [Header("Rocket Punch (Charge)")]
@@ -130,6 +171,8 @@ public class MawaruController : MonoBehaviour
     float normalGravity;
     float normalDrag;
     bool hangJumpRequested = false;
+    int hangSwingDir = 1;
+    bool hangStartKickPending = false;
 
     // ===== Wall =====
     [Header("Wall")]
@@ -167,17 +210,19 @@ public class MawaruController : MonoBehaviour
 
     MawaruEquipment equipment;
     bool hasIsAttackingParam;
+    bool hasDashParam;
 
     // Animator hashes
-    readonly int HashSpeed = Animator.StringToHash("Speed");        // float
-    readonly int HashGrounded = Animator.StringToHash("Grounded");  // bool
+    readonly int HashSpeed = Animator.StringToHash("Speed");
+    readonly int HashGrounded = Animator.StringToHash("Grounded");
     readonly int HashPunch = Animator.StringToHash("Punch");
     readonly int HashPunch2 = Animator.StringToHash("Punch2");
     readonly int HashPunch3 = Animator.StringToHash("Punch3");
     readonly int HashDamage = Animator.StringToHash("Damage");
     readonly int HashIsAttacking = Animator.StringToHash("IsAttacking");
     readonly int HashJump2 = Animator.StringToHash("Jump2");
-    readonly int HashSlide = Animator.StringToHash("Slide"); // あなたのAnimatorにあるbool想定
+    readonly int HashSlide = Animator.StringToHash("Slide");
+    readonly int HashDash = Animator.StringToHash("Dash");
 
     // State hashes（パンチ判定用）
     readonly int StatePunch1 = Animator.StringToHash("Mawaru_Punch");
@@ -191,12 +236,43 @@ public class MawaruController : MonoBehaviour
         return false;
     }
 
-    bool IsCarryMode() => enableCarryDoubleJump && equipment != null && equipment.IsCarryActive;
+    bool IsCarryMode() => unlockDoubleJumpByJuice && enableCarryDoubleJump && equipment != null && equipment.IsCarryActive;
+
+    bool CanUseDash() => unlockDashByJuice;
+    bool CanUseSlide() => unlockSlideByJuice;
+    bool CanUseUpPunch() => unlockUpPunchByJuice;
+    bool CanUseRocketPunch() => enableRocketPunch && unlockRocketPunchByJuice;
 
     int AllowedMaxJumpCount()
     {
         if (!IsCarryMode()) return 1;
         return Mathf.Max(1, carryMaxJumpCount);
+    }
+
+    bool IsDashAnimating()
+    {
+        return dashTimer > 0f
+            && !isSliding
+            && !isHanging
+            && Mathf.Abs(axisH) >= 0.1f;
+    }
+
+    void SetDashAnimatorBool()
+    {
+        if (hasDashParam)
+            animator.SetBool(HashDash, IsDashAnimating());
+    }
+
+    bool IsUpButtonHeldNow()
+    {
+        if (Gamepad.current != null && Gamepad.current.dpad.up.isPressed)
+            return true;
+
+        if (Keyboard.current != null &&
+            (Keyboard.current.upArrowKey.isPressed || Keyboard.current.wKey.isPressed))
+            return true;
+
+        return false;
     }
 
     void Awake()
@@ -210,6 +286,7 @@ public class MawaruController : MonoBehaviour
 
         equipment = GetComponent<MawaruEquipment>();
         hasIsAttackingParam = HasParam(animator, HashIsAttacking);
+        hasDashParam = HasParam(animator, HashDash);
 
         currentHP = Mathf.Clamp(currentHP, 0, maxHP);
         if (!hpBar) hpBar = FindObjectOfType<HpBarController>();
@@ -221,19 +298,20 @@ public class MawaruController : MonoBehaviour
 
         if (punchHitbox)
         {
+            punchBox = punchHitbox.GetComponent<BoxCollider2D>();
+            if (punchBox) punchBox.size = jabBoxSize;
+
             punchCol = punchHitbox.GetComponent<Collider2D>();
             if (punchCol) punchCol.enabled = false;
 
-            punchSR = punchHitbox.GetComponent<SpriteRenderer>();
-            if (punchSR)
-            {
-                punchSR.enabled = false;
-                punchSR.sortingLayerID = sr.sortingLayerID;
-                punchSR.sortingOrder = sr.sortingOrder + 1;
-            }
+            var punchHitboxRenderer = punchHitbox.GetComponent<SpriteRenderer>();
+            if (punchHitboxRenderer)
+                punchHitboxRenderer.enabled = false;
 
             punchLocalDefault = punchHitbox.transform.localPosition;
         }
+
+        SetDashAnimatorBool();
     }
 
     void Update()
@@ -243,11 +321,12 @@ public class MawaruController : MonoBehaviour
 
         if (slideCooldownTimer > 0f) slideCooldownTimer -= Time.deltaTime;
 
-        // タイマー減算
         if (dashTimer > 0f) dashTimer -= Time.deltaTime;
         if (slideTimer > 0f) slideTimer -= Time.deltaTime;
 
-        // Slide終了
+        if (dashTimer < 0f) dashTimer = 0f;
+        if (slideTimer < 0f) slideTimer = 0f;
+
         if (isSliding && slideTimer <= 0f)
         {
             isSliding = false;
@@ -256,7 +335,6 @@ public class MawaruController : MonoBehaviour
 
         bool grounded = IsGrounded();
 
-        // 着地でジャンプ回数リセット
         if (grounded && !wasGrounded)
         {
             jumpCountUsed = 0;
@@ -264,18 +342,14 @@ public class MawaruController : MonoBehaviour
         }
         wasGrounded = grounded;
 
-        // ---- Animatorへ反映 ----
         animator.SetBool(HashGrounded, grounded);
-
-        // ★重要：Speed は「入力」じゃなく「実速度」を入れる（Dash条件 Speed>6 を満たすため）
         animator.SetFloat(HashSpeed, Mathf.Abs(rb.velocity.x));
+        SetDashAnimatorBool();
 
-        // Punch timer
         if (punchTimer > 0f) punchTimer -= Time.deltaTime;
 
         SyncPunchWindow();
 
-        // Rope input
         if (ropePressed)
         {
             ropePressed = false;
@@ -291,11 +365,16 @@ public class MawaruController : MonoBehaviour
                 }
             }
 
-            if (!ropeShot && !isHanging) FireRope();
-            else ReleaseHang();
+            if (!ropeShot && !isHanging)
+            {
+                FireRope();
+            }
+            else if (ropeShot && !isHanging)
+            {
+                CancelRopeShot();
+            }
         }
 
-        // Wall slide detect（Slide中は入らない）
         bool pressLeft = axisH < -0.1f;
         bool pressRight = axisH > 0.1f;
 
@@ -316,18 +395,10 @@ public class MawaruController : MonoBehaviour
             rb.velocity = new Vector2(rb.velocity.x, -wallSlideSpeed);
         }
 
-        if (punchSR) punchSR.enabled = punchVisible;
         if (punchCol) punchCol.enabled = punchVisible;
+        UpdatePunchHitboxTransform();
 
-        if (punchHitbox)
-        {
-            var lp = punchLocalDefault;
-            lp.x = Mathf.Abs(punchOffsetX) * (sr.flipX ? -1f : 1f);
-            punchHitbox.transform.localPosition = lp;
-        }
-
-        // Rocket Punch (charge)
-        if (enableRocketPunch)
+        if (CanUseRocketPunch())
         {
             if (rocketCooldownTimer > 0f) rocketCooldownTimer -= Time.deltaTime;
 
@@ -344,7 +415,7 @@ public class MawaruController : MonoBehaviour
         if (punchPressed)
         {
             punchPressed = false;
-            TryPunch();
+            TryPunch(false);
         }
     }
 
@@ -357,32 +428,20 @@ public class MawaruController : MonoBehaviour
             return;
         }
 
-        // Hanging
         if (isHanging)
         {
-            rb.gravityScale = hangGravity;
-
-            if (Mathf.Abs(axisH) > 0.01f)
-                rb.AddForce(new Vector2(axisH * hangSwingForce, 0f), ForceMode2D.Force);
-
-            var v = rb.velocity;
-            v.x = Mathf.Clamp(v.x, -hangMaxSpeed, hangMaxSpeed);
-            rb.velocity = v;
+            ApplyAutoSwing();
 
             if (hangJumpRequested)
             {
                 hangJumpRequested = false;
-                ReleaseHang();
-                rb.velocity = new Vector2(rb.velocity.x, 0f);
-                rb.AddForce(Vector2.up * hangJumpForce, ForceMode2D.Impulse);
+                JumpFromHang();
             }
             return;
         }
 
-        // Slide中（地上のみ）
         if (isSliding)
         {
-            // 崖で落ちたら即終了（空中スライド禁止の保証）
             if (!IsGrounded())
             {
                 isSliding = false;
@@ -398,7 +457,6 @@ public class MawaruController : MonoBehaviour
             }
         }
 
-        // 通常/ダッシュ移動
         float targetSpeed = (dashTimer > 0f) ? dashSpeed : speed;
         float vx = axisH * targetSpeed;
 
@@ -456,37 +514,38 @@ public class MawaruController : MonoBehaviour
         axisH = v.x;
         axisV = v.y;
 
-        // ---- Dash（左右2回） ----
         bool edgeH = Mathf.Abs(prevAxisH) < 0.2f && Mathf.Abs(v.x) >= 0.8f;
         if (edgeH)
         {
             int dir = (v.x > 0f) ? 1 : -1;
             float now = Time.unscaledTime;
-            if (dir == lastTapDir && (now - lastTapTime) <= doubleTapWindow)
+
+            if (CanUseDash() && dir == lastTapDir && (now - lastTapTime) <= doubleTapWindow)
+            {
                 dashTimer = dashKeepTime;
+                SetDashAnimatorBool();
+            }
 
             lastTapDir = dir;
             lastTapTime = now;
         }
         prevAxisH = v.x;
 
-        // ---- Slide（↓を2回：地上のみ） ----
         bool edgeDown = Mathf.Abs(prevAxisV) < 0.2f && v.y <= -0.8f;
         if (edgeDown)
         {
             float now = Time.unscaledTime;
 
-            // ★空中ではカウントすらしない（空中禁止を安定化）
-            if (IsGrounded() && slideCooldownTimer <= 0f && !isHanging)
+            if (CanUseSlide() && IsGrounded() && slideCooldownTimer <= 0f && !isHanging)
             {
                 if ((now - lastDownTapTime) <= slideDoubleTapWindow)
                 {
                     StartSlide();
-                    lastDownTapTime = -999f; // 消費
+                    lastDownTapTime = -999f;
                 }
                 else
                 {
-                    lastDownTapTime = now;   // 1回目
+                    lastDownTapTime = now;
                 }
             }
         }
@@ -503,27 +562,36 @@ public class MawaruController : MonoBehaviour
             return;
         }
 
-        if (isSliding) return; // スライド中ジャンプ禁止（必要なら外してOK）
+        if (isSliding) return;
         jumpPressed = true;
     }
 
     public void OnRope(InputAction.CallbackContext ctx)
     {
+        RopeHead rh = null;
+        bool isGrabbingEnemy = false;
+
+        if (currentRopeHead)
+        {
+            rh = currentRopeHead.GetComponent<RopeHead>();
+            isGrabbingEnemy = rh != null && rh.IsGrabbing;
+        }
+
+        // 敵を掴んでいる時だけ、ボタンを離した瞬間に投げる（旧仕様を維持）
         if (ctx.canceled)
         {
-            ropePressed = true;
+            if (isGrabbingEnemy)
+                ropePressed = true;
             return;
         }
 
-        if (ctx.performed)
-        {
-            if (currentRopeHead)
-            {
-                var rh = currentRopeHead.GetComponent<RopeHead>();
-                if (rh != null && rh.IsGrabbing) return;
-            }
-            ropePressed = true;
-        }
+        if (!ctx.started && !ctx.performed) return;
+        if (isHanging) return;
+
+        // ぶら下がりは維持したまま、敵投げだけ旧来どおり「離した時」発動にする
+        if (isGrabbingEnemy) return;
+
+        ropePressed = true;
     }
 
     public void OnSwitch(InputAction.CallbackContext ctx)
@@ -541,8 +609,21 @@ public class MawaruController : MonoBehaviour
     {
         if (isSliding) return;
 
-        if (ctx.started)
+        // 押した瞬間を started / performed の両方に対応させる
+        if ((ctx.started || ctx.performed) && !punchPressLatched)
         {
+            punchPressLatched = true;
+            consumedPunchOnStarted = false;
+
+            // 上パンチ解禁後のみ、上ボタンを押している間にパンチを押した瞬間だけ Punch3
+            if (CanUseUpPunch() && IsUpButtonHeldNow())
+            {
+                punchHeld = false;
+                rocketTriggered = false;
+                consumedPunchOnStarted = TryPunch(true);
+                return;
+            }
+
             punchHeld = true;
             punchHoldStart = Time.time;
             rocketTriggered = false;
@@ -551,6 +632,15 @@ public class MawaruController : MonoBehaviour
 
         if (ctx.canceled)
         {
+            punchPressLatched = false;
+
+            if (consumedPunchOnStarted)
+            {
+                consumedPunchOnStarted = false;
+                punchHeld = false;
+                return;
+            }
+
             punchHeld = false;
             if (!rocketTriggered)
                 punchPressed = true;
@@ -562,7 +652,7 @@ public class MawaruController : MonoBehaviour
     // ===== Slide =====
     void StartSlide()
     {
-        // ★地上限定
+        if (!CanUseSlide()) return;
         if (!IsGrounded()) return;
         if (slideCooldownTimer > 0f) return;
         if (isSliding) return;
@@ -571,34 +661,46 @@ public class MawaruController : MonoBehaviour
         slideTimer = slideKeepTime;
         slideCooldownTimer = slideCooldown;
 
-        // 向き固定：入力があればそれ、なければ現在向き
         if (axisH > 0.2f) slideDir = 1;
         else if (axisH < -0.2f) slideDir = -1;
         else slideDir = sr.flipX ? -1 : 1;
 
-        // AnimatorのSlide(bool)をON（AnyState→Slide が確実に入る）
         animator.SetBool(HashSlide, true);
-
-        // ダッシュは切る（好みで）
         dashTimer = 0f;
+        SetDashAnimatorBool();
     }
 
     // ===== Punch helpers =====
-    void TryPunch()
+    bool TryPunch(bool forcePunch3)
     {
-        if (punchTimer > 0f) return;
-        if (isHanging) return;
-        if (rocketActive) return;
-        if (isSliding) return;
+        if (punchTimer > 0f) return false;
+        if (isHanging) return false;
+        if (rocketActive) return false;
+        if (isSliding) return false;
 
         punchTimer = punchCooldown;
 
-        if (!wasInPunch) comboStep = 0;
-        comboStep = Mathf.Clamp(comboStep + 1, 1, 3);
+        if (forcePunch3)
+        {
+            comboStep = 0;
+            currentPunchKind = PunchKind.Up;
 
-        if (comboStep == 1) animator.SetTrigger(HashPunch);
-        else if (comboStep == 2) animator.SetTrigger(HashPunch2);
-        else animator.SetTrigger(HashPunch3);
+            // Triggerではなく直接再生して、Idle/Walkから確実に入れる
+            animator.ResetTrigger(HashPunch);
+            animator.ResetTrigger(HashPunch2);
+            animator.ResetTrigger(HashPunch3);
+            animator.Play("Mawaru_Punch3", 0, 0f);
+        }
+        else
+        {
+            if (!wasInPunch) comboStep = 0;
+
+            comboStep = Mathf.Clamp(comboStep + 1, 1, 2);
+            currentPunchKind = PunchKind.Jab;
+
+            if (comboStep == 1) animator.SetTrigger(HashPunch);
+            else animator.SetTrigger(HashPunch2);
+        }
 
         if (hasIsAttackingParam) animator.SetBool(HashIsAttacking, true);
 
@@ -607,11 +709,18 @@ public class MawaruController : MonoBehaviour
             var clip = punchVoices[UnityEngine.Random.Range(0, punchVoices.Length)];
             if (clip) punchVoiceSource.PlayOneShot(clip, punchVoiceVolume);
         }
+
+        return true;
     }
 
     void SyncPunchWindow()
     {
-        if (!punchHitbox || animator == null) { punchVisible = false; wasInPunch = false; return; }
+        if (!punchHitbox || animator == null)
+        {
+            punchVisible = false;
+            wasInPunch = false;
+            return;
+        }
 
         var st = animator.GetCurrentAnimatorStateInfo(0);
         bool inPunch = st.shortNameHash == StatePunch1 || st.shortNameHash == StatePunch2 || st.shortNameHash == StatePunch3;
@@ -631,6 +740,48 @@ public class MawaruController : MonoBehaviour
 
         punchVisible = t >= w.start && t <= w.end;
         wasInPunch = true;
+
+        punchNormT = t;
+        punchCurrentWindow = w;
+    }
+
+    void UpdatePunchHitboxTransform()
+    {
+        if (!punchHitbox) return;
+
+        if (!punchVisible)
+        {
+            if (punchBox) punchBox.size = jabBoxSize;
+            punchHitbox.transform.localPosition = punchLocalDefault;
+            return;
+        }
+
+        float facing = sr.flipX ? -1f : 1f;
+        float p = Mathf.InverseLerp(punchCurrentWindow.start, punchCurrentWindow.end, punchNormT);
+        p = Mathf.Clamp01(p);
+        float e = EvalExtend01(p);
+
+        Vector3 add = Vector3.zero;
+        Vector2 boxSize = jabBoxSize;
+
+        if (currentPunchKind == PunchKind.Straight)
+        {
+            boxSize = straightBoxSize;
+            add = new Vector3(facing * (Mathf.Abs(punchOffsetX) + straightExtend * e), 0f, 0f);
+        }
+        else if (currentPunchKind == PunchKind.Up)
+        {
+            boxSize = upBoxSize;
+            add = new Vector3(facing * upForward, upExtend * e, 0f);
+        }
+        else
+        {
+            boxSize = jabBoxSize;
+            add = new Vector3(facing * (Mathf.Abs(punchOffsetX) + jabExtend * e), 0f, 0f);
+        }
+
+        if (punchBox) punchBox.size = boxSize;
+        punchHitbox.transform.localPosition = punchLocalDefault + add;
     }
 
     // ===== Rope =====
@@ -678,7 +829,11 @@ public class MawaruController : MonoBehaviour
         head.transform.rotation = Quaternion.FromToRotation(Vector3.right, shootDir);
 
         var rh = head.GetComponent<RopeHead>();
-        if (rh) { rh.ropeLength = ropeLength; rh.Init(GetComponent<Rigidbody2D>(), this); }
+        if (rh)
+        {
+            rh.ropeLength = ropeLength;
+            rh.Init(GetComponent<Rigidbody2D>(), this);
+        }
     }
 
     public void SetHanging(bool h)
@@ -686,6 +841,19 @@ public class MawaruController : MonoBehaviour
         isHanging = h;
         rb.gravityScale = isHanging ? hangGravity : normalGravity;
         rb.drag = isHanging ? hangDrag : normalDrag;
+
+        if (isHanging)
+        {
+            hangSwingDir = sr.flipX ? -1 : 1;
+            hangStartKickPending = true;
+            jumpCountUsed = 1;
+        }
+        else
+        {
+            hangStartKickPending = false;
+        }
+
+        SetDashAnimatorBool();
     }
 
     public void OnRopeReturned()
@@ -694,8 +862,10 @@ public class MawaruController : MonoBehaviour
         currentRopeHead = null;
         isHanging = false;
         hangJumpRequested = false;
+        hangStartKickPending = false;
         rb.gravityScale = normalGravity;
         rb.drag = normalDrag;
+        SetDashAnimatorBool();
     }
 
     public void ReleaseHang()
@@ -708,6 +878,87 @@ public class MawaruController : MonoBehaviour
 
         if (currentRopeHead) Destroy(currentRopeHead);
         OnRopeReturned();
+    }
+
+    void CancelRopeShot()
+    {
+        if (currentRopeHead) Destroy(currentRopeHead);
+        OnRopeReturned();
+    }
+
+    void ApplyAutoSwing()
+    {
+        rb.gravityScale = hangGravity;
+        rb.drag = hangDrag;
+
+        var dj = GetComponent<DistanceJoint2D>();
+        if (!dj)
+            return;
+
+        Vector2 anchor = dj.connectedAnchor;
+        Vector2 radius = rb.position - anchor;
+        if (radius.sqrMagnitude <= 0.0001f)
+            return;
+
+        float angle = Vector2.SignedAngle(Vector2.down, radius);
+        if (angle >= autoSwingMaxAngle) hangSwingDir = -1;
+        else if (angle <= -autoSwingMaxAngle) hangSwingDir = 1;
+
+        Vector2 tangent = GetSwingTangent(radius, hangSwingDir);
+        float tangentSpeed = Vector2.Dot(rb.velocity, tangent);
+
+        if (hangStartKickPending)
+        {
+            hangStartKickPending = false;
+            rb.velocity += tangent * autoSwingStartKick;
+            tangentSpeed = Vector2.Dot(rb.velocity, tangent);
+        }
+
+        if (Mathf.Abs(tangentSpeed) < hangMaxSpeed)
+            rb.AddForce(tangent * hangSwingForce, ForceMode2D.Force);
+
+        float speed = rb.velocity.magnitude;
+        if (speed > hangMaxSpeed)
+            rb.velocity = rb.velocity.normalized * hangMaxSpeed;
+
+        if (Mathf.Abs(rb.velocity.x) > 0.05f)
+            sr.flipX = rb.velocity.x < 0f;
+    }
+
+    Vector2 GetSwingTangent(Vector2 radius, int dir)
+    {
+        radius.Normalize();
+        Vector2 ccwTangent = new Vector2(-radius.y, radius.x);
+        return (dir >= 0 ? ccwTangent : -ccwTangent).normalized;
+    }
+
+    void JumpFromHang()
+    {
+        Vector2 launchVelocity = rb.velocity;
+        var dj = GetComponent<DistanceJoint2D>();
+
+        if (dj)
+        {
+            Vector2 anchor = dj.connectedAnchor;
+            Vector2 radius = rb.position - anchor;
+            if (radius.sqrMagnitude > 0.0001f)
+            {
+                Vector2 tangent = GetSwingTangent(radius, hangSwingDir);
+                float tangentSpeed = Vector2.Dot(launchVelocity, tangent);
+
+                if (Mathf.Abs(tangentSpeed) > 0.05f)
+                    tangent *= Mathf.Sign(tangentSpeed);
+
+                float desiredSpeed = Mathf.Max(hangJumpForce, Mathf.Abs(tangentSpeed) + hangReleaseExtraSpeed);
+                launchVelocity = tangent * desiredSpeed;
+            }
+        }
+
+        ReleaseHang();
+        rb.velocity = launchVelocity;
+
+        if (Mathf.Abs(rb.velocity.x) > 0.05f)
+            sr.flipX = rb.velocity.x < 0f;
     }
 
     // ===== Ground =====
@@ -729,10 +980,11 @@ public class MawaruController : MonoBehaviour
         if (invincibleTimer > 0f) return;
         if (currentHP <= 0) return;
 
-        // Slide解除
         isSliding = false;
         slideTimer = 0f;
+        dashTimer = 0f;
         animator.SetBool(HashSlide, false);
+        SetDashAnimatorBool();
 
         currentHP = Mathf.Clamp(currentHP - dmg, 0, maxHP);
         animator.SetTrigger(HashDamage);
@@ -835,5 +1087,102 @@ public class MawaruController : MonoBehaviour
     {
         if (!IsDamageTarget(col.collider.gameObject)) return;
         TakeDamage(contactDamage, GetKnockDir(col.collider));
+    }
+
+    float EvalExtend01(float p)
+    {
+        float outEnd = Mathf.Clamp01(punchOutEnd);
+        float holdEnd = Mathf.Clamp01(punchHoldEnd);
+        if (holdEnd < outEnd) holdEnd = outEnd;
+
+        if (p < outEnd) return (outEnd <= 0.0001f) ? 1f : (p / outEnd);
+        if (p < holdEnd) return 1f;
+        return 1f - (p - holdEnd) / Mathf.Max(0.0001f, 1f - holdEnd);
+    }
+
+
+    public int RecoverHP(int amount)
+    {
+        if (amount <= 0) return 0;
+        if (currentHP <= 0) return 0;
+
+        int before = currentHP;
+        currentHP = Mathf.Clamp(currentHP + amount, 0, maxHP);
+        int healed = currentHP - before;
+
+        hpBar?.SetHp(currentHP, maxHP);
+        OnHpChanged?.Invoke(currentHP, maxHP);
+        return healed;
+    }
+
+    public void SetDashUnlocked(bool unlocked)
+    {
+        unlockDashByJuice = unlocked;
+        if (!unlockDashByJuice)
+        {
+            dashTimer = 0f;
+            SetDashAnimatorBool();
+        }
+    }
+
+    public void SetSlideUnlocked(bool unlocked)
+    {
+        unlockSlideByJuice = unlocked;
+        if (!unlockSlideByJuice)
+        {
+            isSliding = false;
+            slideTimer = 0f;
+            slideCooldownTimer = 0f;
+            animator.SetBool(HashSlide, false);
+        }
+    }
+
+    public void SetUpPunchUnlocked(bool unlocked)
+    {
+        unlockUpPunchByJuice = unlocked;
+    }
+
+    public void SetDoubleJumpUnlocked(bool unlocked)
+    {
+        unlockDoubleJumpByJuice = unlocked;
+        if (!unlockDoubleJumpByJuice)
+        {
+            jumpCountUsed = Mathf.Min(jumpCountUsed, 1);
+        }
+    }
+
+    public void SetRocketPunchUnlocked(bool unlocked)
+    {
+        unlockRocketPunchByJuice = unlocked;
+
+        if (!CanUseRocketPunch())
+        {
+            punchHeld = false;
+            rocketTriggered = false;
+            rocketCooldownTimer = 0f;
+
+            if (rocketCo != null)
+            {
+                StopCoroutine(rocketCo);
+                rocketCo = null;
+            }
+
+            rocketActive = false;
+        }
+    }
+
+    public void ApplyAllJuiceUnlocks(bool dashUnlocked, bool upPunchUnlocked, bool slideUnlocked, bool doubleJumpUnlocked, bool rocketPunchUnlocked)
+    {
+        SetDashUnlocked(dashUnlocked);
+        SetUpPunchUnlocked(upPunchUnlocked);
+        SetSlideUnlocked(slideUnlocked);
+        SetDoubleJumpUnlocked(doubleJumpUnlocked);
+        SetRocketPunchUnlocked(rocketPunchUnlocked);
+    }
+
+    public void GrantIFrames(float seconds)
+    {
+        if (seconds <= 0f) return;
+        invincibleTimer = Mathf.Max(invincibleTimer, seconds);
     }
 }

@@ -1,167 +1,160 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class EnemyStraightMouth : MonoBehaviour
 {
-
-    [Header("Facing")]
-    public bool spriteDefaultFacesRight = true; // もしデフォが左向きならfalse
-
-    [Header("Render")]
+    [Header("Refs")]
     public SpriteRenderer spriteRenderer;
-    public Sprite[] mouthSprites = new Sprite[3]; // 1,2,3
+    public Transform groundCheck;
+    public LayerMask groundLayer;
 
-    [Header("Move (Straight)")]
-    public float moveSpeed = 3.5f;
-    [Tooltip("true=右へ / false=左へ")]
-    public bool moveRight = false;
-    public bool faceMoveDirection = true;
-    public bool lockYVelocity = true;
+    [Header("Move")]
+    public float moveSpeed = 1.5f;
+    public bool moveRight = true;
 
-    [Header("Mouth Anim (Slow)")]
-    [Tooltip("口パクの速度。小さいほどゆっくり（例: 2〜6）")]
-    public float slowFps = 3f;
+    [Header("Wall check (従来：WallLayer)")]
+    public Transform wallCheck;
+    public float wallCheckRadius = 0.08f;
+    public LayerMask wallLayer;
 
-    [Header("Contact Damage")]
-    public int contactDamage = 1;
-    public float hitCooldown = 0.5f;
-    public string playerTag = "Player"; // Player/mawaru13を同じTagにするのが楽
+    [Header("Animation")]
+    public Sprite[] walkSprites;
+    public float animFps = 6f;
 
-    [Header("Knockback (when enemy is hit)")]
-    public float knockbackForce = 7f;
-    public float knockbackUp = 1.5f;   // 完全水平なら0
-    public float stunTime = 0.15f;
+    [Header("Fix: rotate-room wall (any solid side collision turns)")]
+    [Tooltip("回転部屋(=Defaultなど)の壁でも止まらず反転させる。通常のwallLayer設定はそのままでOK")]
+    public bool turnOnAnySolidSideCollision = true;
 
+    [Tooltip("壁に当たった直後の連続反転を防ぐクールダウン")]
+    public float wallTurnCooldown = 0.08f;
 
-    [Header("Despawn on Wall")]
-    public float despawnDelay = 1f;
-    public LayerMask wallLayers; // Wallレイヤーを指定
-
-    bool dying;
+    [Tooltip("壁から少し押し戻す量（めり込みで停止するの対策）")]
+    public float depenetrationPush = 0.03f;
 
     Rigidbody2D rb;
-    bool stunned;
-    float lastHitTime;
+    Enemy enemy;
 
-    int frame;
-    float frameProgress;
+    int animIndex;
+    float animTimer;
+    float lastWallTurnTime = -999f;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        rb.freezeRotation = true;
-
+        enemy = GetComponent<Enemy>();
         if (!spriteRenderer) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-        if (mouthSprites != null && mouthSprites.Length >= 1 && mouthSprites[0] != null)
-            spriteRenderer.sprite = mouthSprites[0];
-    }
-
-    void Update()
-    {
-        if (mouthSprites == null || mouthSprites.Length < 3) return;
-
-        // 口パクをゆっくり（固定FPS）
-        frameProgress += Time.deltaTime * Mathf.Max(0.1f, slowFps);
-        while (frameProgress >= 1f)
-        {
-            frameProgress -= 1f;
-            frame = (frame + 1) % 3;
-            spriteRenderer.sprite = mouthSprites[frame];
-        }
     }
 
     void FixedUpdate()
     {
-        var e = GetComponent<Enemy>();
-
-        // ★掴み中：完全停止（移動スクリプトが速度を上書きしない）
-        if (e != null && e.isGrabbed)
+        // 掴まれ/投げられ/スタン中はAI停止
+        if (enemy != null)
         {
-            rb.velocity = Vector2.zero;
-            return;
+            if (enemy.IsGrabbed) { rb.velocity = Vector2.zero; return; }
+            if (enemy.IsFlying) return;
+            if (enemy.IsShellStunned) { rb.velocity = Vector2.zero; return; }
         }
 
-        // ★投げられて飛行中：移動スクリプトで速度を上書きしない（物理に任せる）
-        if (e != null && e.isFlying)
+        // 地上チェック（必要なら利用）
+        bool grounded = false;
+        if (groundCheck) grounded = Physics2D.OverlapCircle(groundCheck.position, 0.08f, groundLayer);
+
+        // 従来のWallLayer判定（通常壁用）
+        bool hitWall = false;
+        if (wallCheck)
+            hitWall = Physics2D.OverlapCircle(wallCheck.position, wallCheckRadius, wallLayer);
+
+        if (hitWall && Time.time - lastWallTurnTime >= wallTurnCooldown)
         {
-            return;
+            lastWallTurnTime = Time.time;
+            moveRight = !moveRight;
         }
 
-        if (stunned)
+        // 移動
+        float vx = (moveRight ? 1f : -1f) * moveSpeed;
+        rb.velocity = new Vector2(vx, rb.velocity.y);
+
+        // 見た目
+        if (spriteRenderer) spriteRenderer.flipX = moveRight;
+
+        // アニメ
+        if (walkSprites != null && walkSprites.Length > 0 && spriteRenderer)
         {
-            if (lockYVelocity) rb.velocity = new Vector2(rb.velocity.x, 0f);
-            return;
+            animTimer += Time.fixedDeltaTime;
+            float spf = 1f / Mathf.Max(0.01f, animFps);
+            if (animTimer >= spf)
+            {
+                animTimer -= spf;
+                animIndex = (animIndex + 1) % walkSprites.Length;
+                spriteRenderer.sprite = walkSprites[animIndex];
+            }
         }
-
-        float sign = moveRight ? 1f : -1f;
-        float vx = sign * moveSpeed;
-        float vy = lockYVelocity ? 0f : rb.velocity.y;
-        rb.velocity = new Vector2(vx, vy);
-
-        if (faceMoveDirection && spriteRenderer)
-            spriteRenderer.flipX = spriteDefaultFacesRight ? (sign < 0f) : (sign > 0f);
     }
 
-    // 接触ダメ（敵のCollider2Dは IsTrigger ON 推奨）
-    void OnCollisionEnter2D(Collision2D col)
+    bool TryGetSideNormal(Collision2D c, out float nx)
     {
-        var e = GetComponent<Enemy>();
-        if (e != null && e.isFlying) return; // ★飛行中は消さない
+        nx = 0f;
+        if (c == null || c.contactCount == 0) return false;
 
-        if (((1 << col.gameObject.layer) & wallLayers) != 0)
-            Destroy(gameObject);
+        for (int i = 0; i < c.contactCount; i++)
+        {
+            var n = c.contacts[i].normal;
+            if (Mathf.Abs(n.x) > 0.5f && Mathf.Abs(n.x) > Mathf.Abs(n.y))
+            {
+                nx = n.x;
+                return true;
+            }
+        }
+        return false;
     }
 
-    IEnumerator DespawnAfter()
+    bool ShouldIgnoreCollider(Collider2D other)
     {
-        yield return new WaitForSeconds(despawnDelay);
-        Destroy(gameObject);
+        if (!other) return true;
+        if (other.isTrigger) return true;
+        if (other.transform.IsChildOf(transform)) return true;
+
+        if (other.GetComponentInParent<PlayerController>() != null) return true;
+        if (other.GetComponentInParent<MawaruController>() != null) return true;
+
+        return false;
     }
 
-    // プレイヤー攻撃側から呼ぶ：ノックバック
-    public void TakeHit(int damage, Vector2 attackerPos, float kbForce = 7f, float kbUp = 1.5f)
+    void TurnFromSideCollision(float nx)
     {
-        var enemy = GetComponent<Enemy>();
-        if (enemy) enemy.TakeDamage(damage);
+        if (Time.time - lastWallTurnTime < wallTurnCooldown) return;
+        lastWallTurnTime = Time.time;
 
-        Vector2 dir = ((Vector2)transform.position - attackerPos).normalized;
-        rb.velocity = Vector2.zero;
-        rb.AddForce(new Vector2(dir.x * kbForce, kbUp), ForceMode2D.Impulse);
+        // normal.x > 0 → 左壁に当たった → 右へ
+        // normal.x < 0 → 右壁に当たった → 左へ
+        moveRight = nx > 0f;
 
-        StartCoroutine(StunCoroutine()); // ★追加
+        if (rb)
+        {
+            float push = Mathf.Max(0f, depenetrationPush);
+            rb.position += new Vector2(moveRight ? push : -push, 0f);
+        }
     }
 
-    IEnumerator StunCoroutine()
+    void OnCollisionEnter2D(Collision2D c)
     {
-        stunned = true;
-        yield return new WaitForSeconds(stunTime);
-        stunned = false;
+        if (!turnOnAnySolidSideCollision) return;
+        if (enemy != null && enemy.IsFlying) return;
+        if (enemy != null && enemy.IsGrabbed) return;
+        if (c == null || ShouldIgnoreCollider(c.collider)) return;
+
+        if (TryGetSideNormal(c, out float nx))
+            TurnFromSideCollision(nx);
     }
 
-    public void KnockbackFrom(Vector2 attackerPos)
+    void OnCollisionStay2D(Collision2D c)
     {
-        // これ重要：無効状態なら何もしない
-        if (!isActiveAndEnabled || !gameObject.activeInHierarchy) return;
-        if (dying) return; // 壁消滅などの途中なら無視（dying使ってるなら）
+        if (!turnOnAnySolidSideCollision) return;
+        if (enemy != null && enemy.IsFlying) return;
+        if (enemy != null && enemy.IsGrabbed) return;
+        if (c == null || ShouldIgnoreCollider(c.collider)) return;
 
-        if (!rb) rb = GetComponent<Rigidbody2D>();
-
-        Vector2 dir = ((Vector2)transform.position - attackerPos).normalized;
-        rb.velocity = Vector2.zero;
-        rb.AddForce(new Vector2(dir.x * knockbackForce, knockbackUp), ForceMode2D.Impulse);
-
-        StartCoroutine(StunCoroutine());
+        if (TryGetSideNormal(c, out float nx))
+            TurnFromSideCollision(nx);
     }
-
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        var e = GetComponent<Enemy>();
-        if (e != null && e.isFlying) return; // ★飛行中は消さない
-
-        if (((1 << other.gameObject.layer) & wallLayers) != 0)
-            Destroy(gameObject);
-    }
-
-
 }

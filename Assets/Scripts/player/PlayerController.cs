@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -10,6 +9,7 @@ public class PlayerController : MonoBehaviour
     // === 基本 ===
     Rigidbody2D rbody;
     public PlayerShoot playerShootScript;
+    public PlayerBombThrow playerBombThrowScript;
     public Joystick joystick;
     float axisH = 0f, axisV = 0f;
 
@@ -103,7 +103,7 @@ public class PlayerController : MonoBehaviour
 
     // === ノックバック ===
     [Header("Knockback")]
-    public Vector2 knockbackForce = new Vector2(7f, 4f);  // X=後ろへ, Y=上へ
+    public Vector2 knockbackForce = new Vector2(7f, 4f);
     public float knockbackDuration = 0.2f;
 
     Vector2 knockbackVelocity = Vector2.zero;
@@ -118,17 +118,19 @@ public class PlayerController : MonoBehaviour
     public AudioSource seSource;
     public AudioClip shootSE;
 
-    public event Action<int, int> OnHpChanged;
+    public event System.Action<int, int> OnHpChanged;
 
     private PlayerInput _playerInput;
+    private InputAction _railgunAction;
+    private InputAction _summonAction;
+    private InputAction _ropeAction;
 
     float normalGravity = 1f;
 
-
     [Header("Shoot Voices (Random)")]
-    public AudioClip[] shootVoices;          // ここに3つ入れる
+    public AudioClip[] shootVoices;
     [Range(0f, 1f)] public float voiceVolume = 1f;
-    public float voiceMinInterval = 0.05f;   // 連射で重なりすぎ防止
+    public float voiceMinInterval = 0.05f;
 
     float lastVoiceTime = -999f;
     int lastVoiceIndex = -1;
@@ -137,13 +139,10 @@ public class PlayerController : MonoBehaviour
     {
         if (seSource == null) return;
         if (shootVoices == null || shootVoices.Length == 0) return;
-
-        // 連射で同フレーム多重再生を避ける
         if (Time.time - lastVoiceTime < voiceMinInterval) return;
 
         int idx = UnityEngine.Random.Range(0, shootVoices.Length);
 
-        // 同じの連続を避けたい（2個以上ある時だけ）
         if (shootVoices.Length >= 2 && idx == lastVoiceIndex)
             idx = (idx + 1) % shootVoices.Length;
 
@@ -157,9 +156,9 @@ public class PlayerController : MonoBehaviour
     }
 
     [Header("Damage Voice")]
-    public AudioClip damageVoice;                 // ← voice_あうぅ_ティニー を入れる
+    public AudioClip damageVoice;
     [Range(0f, 1f)] public float damageVoiceVolume = 1f;
-    public float damageVoiceMinInterval = 0.2f;   // 連続ヒットで鳴りすぎ防止
+    public float damageVoiceMinInterval = 0.2f;
 
     float lastDamageVoiceTime = -999f;
 
@@ -167,18 +166,16 @@ public class PlayerController : MonoBehaviour
     {
         if (seSource == null) return;
         if (damageVoice == null) return;
-
         if (Time.time - lastDamageVoiceTime < damageVoiceMinInterval) return;
 
         seSource.PlayOneShot(damageVoice, damageVoiceVolume);
         lastDamageVoiceTime = Time.time;
     }
 
-
-
     void Awake()
     {
         if (playerShootScript == null) playerShootScript = GetComponent<PlayerShoot>();
+        if (playerBombThrowScript == null) playerBombThrowScript = GetComponent<PlayerBombThrow>();
         _playerInput = GetComponent<PlayerInput>();
     }
 
@@ -218,7 +215,6 @@ public class PlayerController : MonoBehaviour
             railgunAudioSource.spatialBlend = 0f;
         }
 
-        // ★クリップ長を自動取得（見つからなければFallback）
         shotLockTime = FindClipLength(shotAnime, shotLockFallback);
         damageLockTime = FindClipLength(damageAnime, damageLockFallback);
     }
@@ -230,18 +226,14 @@ public class PlayerController : MonoBehaviour
         if (gameState != "playing") return;
 
         if (wallJumpLockTimer > 0f) wallJumpLockTimer -= Time.deltaTime;
-
-        // ★ワンショット中は「移動や入力」は止めない。アニメ上書きだけ止める。
         if (actionLockTimer > 0f) actionLockTimer -= Time.deltaTime;
 
-        // 仮想スティック
         if (joystick != null && joystick.isActiveAndEnabled)
         {
             axisH = Mathf.Abs(joystick.Horizontal) > 0.1f ? joystick.Horizontal : 0f;
             axisV = Mathf.Abs(joystick.Vertical) > 0.1f ? joystick.Vertical : 0f;
         }
 
-        // 残像（ダッシュ中）
         if (isDashing && afterImagePrefab != null)
         {
             afterImageTimer -= Time.deltaTime;
@@ -261,7 +253,6 @@ public class PlayerController : MonoBehaviour
         }
         else afterImageTimer = 0f;
 
-        // 地面・壁
         CapsuleCollider2D col = GetComponent<CapsuleCollider2D>();
         Vector2 origin = new Vector2(transform.position.x, col.bounds.min.y - 0.05f);
         bool onGround = Physics2D.OverlapCircle(origin, 0.1f, groundLayer);
@@ -276,26 +267,21 @@ public class PlayerController : MonoBehaviour
             rbody.velocity = new Vector2(rbody.velocity.x, -wallSlideSpeed);
         }
 
-        // キーボードZでジャンプ（デバッグ用）
         if (Keyboard.current != null && Keyboard.current.zKey.wasPressedThisFrame)
         {
             DoJumpInput();
         }
 
-        // 方向反転
         if (axisH > 0) transform.localScale = new Vector2(1, 1);
         else if (axisH < 0) transform.localScale = new Vector2(-1, 1);
 
-        // ハシゴでシーン遷移（例）
         if (onLadder && transform.position.y >= 5.5f)
         {
             SceneManager.LoadScene("Stage2");
         }
 
-        // 無敵タイマー
         if (invincibleTimer > 0f) invincibleTimer -= Time.deltaTime;
 
-        // ダッシュ二度押し
         float now = Time.time;
         if (axisH > 0.5f && prevAxisH <= 0.5f)
         {
@@ -321,7 +307,6 @@ public class PlayerController : MonoBehaviour
 
     void LateUpdate()
     {
-        // カラー点滅（無敵/溜め撃ち）
         var shoot = GetComponent<PlayerShoot>();
         if (invincibleTimer > 0f)
         {
@@ -344,7 +329,6 @@ public class PlayerController : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.IsPaused) return;
         if (gameState != "playing") return;
 
-        // ノックバック
         if (knockbackTimer > 0)
         {
             rbody.velocity = knockbackVelocity;
@@ -354,11 +338,9 @@ public class PlayerController : MonoBehaviour
 
         float inputX = axisH;
 
-        // 壁ジャンプロック
         if (wallJumpLockTimer > 0) { wallJumpLockTimer -= Time.fixedDeltaTime; inputX = 0; }
         else wallJumpLockTimer = 0;
 
-        // 壁スライド
         if (isWallSliding)
         {
             rbody.velocity = new Vector2(rbody.velocity.x, Mathf.Max(rbody.velocity.y, -wallSlideSpeed));
@@ -368,7 +350,6 @@ public class PlayerController : MonoBehaviour
             rbody.velocity = new Vector2(inputX * (isDashing ? dashSpeed : speed), rbody.velocity.y);
         }
 
-        // ハシゴ
         if (onLadder)
         {
             rbody.velocity = new Vector2(0, axisV * climbSpeed);
@@ -380,7 +361,6 @@ public class PlayerController : MonoBehaviour
             rbody.gravityScale = normalGravity;
         }
 
-        // 地面判定＆ジャンプ
         CapsuleCollider2D col = GetComponent<CapsuleCollider2D>();
         Vector2 origin = new Vector2(transform.position.x, col.bounds.min.y - 0.05f);
         bool onGround = Physics2D.OverlapCircle(origin, 0.1f, groundLayer);
@@ -391,10 +371,8 @@ public class PlayerController : MonoBehaviour
             goJump = false;
         }
 
-        // ★ワンショット中は locomotion の animator.Play 上書きをしない
         if (actionLockTimer > 0f) return;
 
-        // アニメ切り替え（通常）
         string next = onGround ? (axisH == 0 ? stopAnime : moveAnime) : jumpAnime;
         if (next != oldAnime)
         {
@@ -404,7 +382,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // === 入力ハンドラ ===
     public void OnMove(InputAction.CallbackContext ctx)
     {
         if (GameManager.Instance != null && GameManager.Instance.IsPaused)
@@ -426,12 +403,10 @@ public class PlayerController : MonoBehaviour
     {
         if (GameManager.Instance != null && GameManager.Instance.IsPaused) return;
 
-        // 地面判定
         var col = GetComponent<CapsuleCollider2D>();
         Vector2 origin = new Vector2(transform.position.x, col.bounds.min.y - 0.05f);
         bool onGround = Physics2D.OverlapCircle(origin, 0.1f, groundLayer);
 
-        // 壁ジャンプ
         if (!onGround && (isWallSliding || isTouchingWallLeft || isTouchingWallRight))
         {
             float dir;
@@ -448,7 +423,6 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // 通常ジャンプ
         if (onGround) Jump();
     }
 
@@ -458,15 +432,11 @@ public class PlayerController : MonoBehaviour
 
         if (playerShootScript == null) playerShootScript = GetComponent<PlayerShoot>();
 
-        // ★撃つ瞬間にショットアニメ
         if (ctx.started)
         {
             playerShootScript.OnShootButtonDown();
-
-            // 追加：ランダムボイス
             PlayRandomShootVoice();
 
-            // 既存SE（必要なら残す）
             if (shootSE && seSource) seSource.PlayOneShot(shootSE);
         }
 
@@ -476,12 +446,30 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // ★削除対象の互換スタブ（InputActionsに残っててもエラーにしない）
     public void OnPunch(InputAction.CallbackContext ctx) { }
-    public void OnSummon(InputAction.CallbackContext ctx) { }
-    public void OnRope(InputAction.CallbackContext ctx) { }
 
-    // ★RopeHead.cs が参照している可能性があるので、コンパイル用に残す（中身は空）
+    public void OnSummon(InputAction.CallbackContext ctx)
+    {
+        if (GameManager.Instance != null && GameManager.Instance.IsPaused) return;
+        if (!ctx.started && !ctx.performed) return;
+
+        if (playerBombThrowScript == null) playerBombThrowScript = GetComponent<PlayerBombThrow>();
+        if (playerBombThrowScript == null) return;
+
+        playerBombThrowScript.OnBombButtonDown();
+    }
+
+    public void OnRope(InputAction.CallbackContext ctx)
+    {
+        if (GameManager.Instance != null && GameManager.Instance.IsPaused) return;
+        if (!ctx.started && !ctx.performed) return;
+
+        if (playerBombThrowScript == null) playerBombThrowScript = GetComponent<PlayerBombThrow>();
+        if (playerBombThrowScript == null) return;
+
+        playerBombThrowScript.OnBombButtonDown();
+    }
+
     public void SetHanging(bool hanging) { }
     public void OnRopeReturned() { }
 
@@ -534,26 +522,19 @@ public class PlayerController : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        // 互換維持：相手座標が分からない時は「向いてる方向と逆」に飛ばす
         float fallbackAttackerX = transform.position.x + ((transform.localScale.x >= 0) ? 1f : -1f);
         TakeDamage(damage, fallbackAttackerX);
     }
 
-    // ★新規：相手のX位置を渡せる版（これを本命にする）
     public void TakeDamage(int damage, float attackerX)
     {
         if (gameState != "playing") return;
         if (invincibleTimer > 0f) return;
         if (isDead) return;
 
-        // ★ノックバック発生
         ApplyKnockbackFromX(attackerX);
 
-        // HP 減少
         currentHP = Mathf.Clamp(currentHP - damage, 0, maxHP);
-
-        // （ダメージボイスを入れてるならここで呼ぶ）
-        // PlayDamageVoice();
 
         hpBar?.SetHp(currentHP);
         OnHpChanged?.Invoke(currentHP, maxHP);
@@ -599,7 +580,7 @@ public class PlayerController : MonoBehaviour
         }
         else if (col.CompareTag("Enemy"))
         {
-            knockbackTimer = knockbackDuration; // なくてもOK（TakeDamage側で入る）
+            knockbackTimer = knockbackDuration;
             TakeDamage(1, col.bounds.center.x);
         }
     }
@@ -609,17 +590,13 @@ public class PlayerController : MonoBehaviour
         if (col.CompareTag("Ladder")) onLadder = false;
     }
 
-
     void OnCollisionEnter2D(Collision2D col)
     {
-        // Enemyタグに当たったらダメージ
         if (col.collider.CompareTag("Enemy"))
         {
-            // 相手の中心Xでノックバック方向を決める
             TakeDamage(1, col.collider.bounds.center.x);
         }
     }
-
 
     void ShowCutIn()
     {
@@ -672,19 +649,56 @@ public class PlayerController : MonoBehaviour
 
     void OnEnable()
     {
-        if (_playerInput != null)
+        if (_playerInput != null && _playerInput.actions != null)
         {
-            var act = _playerInput.actions.FindAction("Railgun");
-            if (act != null) act.performed += OnRailgun;
+            _railgunAction = _playerInput.actions.FindAction("Railgun");
+            if (_railgunAction != null)
+            {
+                _railgunAction.performed -= OnRailgun;
+                _railgunAction.performed += OnRailgun;
+            }
+
+            _summonAction = _playerInput.actions.FindAction("Summon");
+            if (_summonAction != null)
+            {
+                _summonAction.started -= OnSummon;
+                _summonAction.performed -= OnSummon;
+                _summonAction.started += OnSummon;
+                _summonAction.performed += OnSummon;
+            }
+
+            _ropeAction = _playerInput.actions.FindAction("Rope");
+            if (_ropeAction != null)
+            {
+                _ropeAction.started -= OnRope;
+                _ropeAction.performed -= OnRope;
+                _ropeAction.started += OnRope;
+                _ropeAction.performed += OnRope;
+            }
+            else
+            {
+                Debug.LogWarning("PlayerControls に Rope アクションが見つかりません。");
+            }
         }
     }
 
     void OnDisable()
     {
-        if (_playerInput != null)
+        if (_railgunAction != null)
         {
-            var act = _playerInput.actions.FindAction("Railgun");
-            if (act != null) act.performed -= OnRailgun;
+            _railgunAction.performed -= OnRailgun;
+        }
+
+        if (_summonAction != null)
+        {
+            _summonAction.started -= OnSummon;
+            _summonAction.performed -= OnSummon;
+        }
+
+        if (_ropeAction != null)
+        {
+            _ropeAction.started -= OnRope;
+            _ropeAction.performed -= OnRope;
         }
     }
 
@@ -712,9 +726,6 @@ public class PlayerController : MonoBehaviour
         SceneManager.LoadScene("Resuit");
     }
 
-    // =========================
-    // ★ワンショット再生ユーティリティ
-    // =========================
     void PlayOneShotAnim(string stateName, float lockTime)
     {
         if (!animator) return;
@@ -743,10 +754,8 @@ public class PlayerController : MonoBehaviour
 
     void ApplyKnockbackFromX(float attackerX)
     {
-        // attacker が右にいるなら左へ飛ぶ、左にいるなら右へ飛ぶ
         float dir = (transform.position.x < attackerX) ? -1f : 1f;
         knockbackVelocity = new Vector2(dir * Mathf.Abs(knockbackForce.x), Mathf.Abs(knockbackForce.y));
         knockbackTimer = knockbackDuration;
     }
-
 }

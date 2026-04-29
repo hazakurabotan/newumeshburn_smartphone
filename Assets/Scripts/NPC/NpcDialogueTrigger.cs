@@ -23,10 +23,17 @@ public class NpcDialogueTrigger : MonoBehaviour
     public TextMeshProUGUI nameText;     // 名前（不要なら null でもOK）
     public TextMeshProUGUI dialogueText; // セリフ本文
 
+    [Header("Head Popup Follow")]
+    public bool followNpcHead = true;                // NPC頭上に追従表示する
+    public RectTransform dialoguePanelRect;          // 未設定なら dialogueRoot から自動取得
+    public Transform headAnchor;                     // 未設定なら this.transform
+    public Vector3 worldOffset = new Vector3(0f, 1.6f, 0f);
+    public Vector2 panelScreenOffset = new Vector2(0f, 24f);
+
     [Header("Input / ActionMaps")]
     public string dialogMapName = "Dialog";        // Dialog ActionMap
-    public string dialogNextActionName = "Next";   // Dialog/Next (South)
-    public string interactActionName = "Interact"; // Player/Mawaru/Interact (Hold South)
+    public string dialogNextActionName = "Next";   // Dialog/Next (South / A)
+    public string interactActionName = "Interact"; // Player/Mawaru/Interact (Hold B)
 
     [Header("Lock while talking (optional)")]
     public bool disableMovementScripts = true;     // 会話中に操作停止したい
@@ -37,12 +44,17 @@ public class NpcDialogueTrigger : MonoBehaviour
     bool talking = false;
     int index = 0;
 
-    PlayerInput activeInput;             // いま会話している側（Player or Mawaru）
+    PlayerInput activeInput;              // 会話している側（Player or Mawaru）
     MonoBehaviour[] cachedLocks;          // 止めたいスクリプト
     Rigidbody2D[] cachedBodies;           // 固定したいRB
 
     string prevMapName;
-    InputAction nextAction;              // Dialog/Next
+    InputAction nextAction;               // Dialog/Next
+
+    Canvas parentCanvas;
+    RectTransform canvasRect;
+    Camera canvasCamera;
+    Camera mainCamera;
 
     struct BodyBackup
     {
@@ -61,6 +73,27 @@ public class NpcDialogueTrigger : MonoBehaviour
     void Awake()
     {
         if (dialogueRoot) dialogueRoot.SetActive(false);
+
+        if (headAnchor == null)
+            headAnchor = transform;
+
+        if (dialoguePanelRect == null && dialogueRoot != null)
+            dialoguePanelRect = dialogueRoot.GetComponent<RectTransform>();
+
+        if (dialogueRoot != null)
+            parentCanvas = dialogueRoot.GetComponentInParent<Canvas>();
+
+        if (parentCanvas != null)
+        {
+            canvasRect = parentCanvas.GetComponent<RectTransform>();
+
+            if (parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+                canvasCamera = null;
+            else
+                canvasCamera = parentCanvas.worldCamera;
+        }
+
+        mainCamera = Camera.main;
     }
 
     void Update()
@@ -68,8 +101,6 @@ public class NpcDialogueTrigger : MonoBehaviour
         if (!inRange || talking) return;
         if (lines == null || lines.Length == 0) return;
 
-        // 近くにいるキャラの PlayerInput を見て「Interact(Hold)」が押されたら開始
-        // ※activeInput は OnTriggerStay/Enter で候補を掴む
         if (activeInput == null) return;
 
         var map = activeInput.currentActionMap;
@@ -78,10 +109,19 @@ public class NpcDialogueTrigger : MonoBehaviour
         var interact = map.FindAction(interactActionName, throwIfNotFound: false);
         if (interact == null) return;
 
-        if (interact.WasPerformedThisFrame()) // Hold が成立したフレーム
+        // Hold が成立したフレームで開始
+        if (interact.WasPerformedThisFrame())
         {
             StartDialogue(activeInput);
         }
+    }
+
+    void LateUpdate()
+    {
+        if (!talking) return;
+        if (!followNpcHead) return;
+
+        UpdateDialoguePosition();
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -91,13 +131,11 @@ public class NpcDialogueTrigger : MonoBehaviour
 
     void OnTriggerStay2D(Collider2D other)
     {
-        // 入り直しや入れ替えにも強くする
         if (!talking) TrySetActiveTalker(other);
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
-        // 抜けたのが今の話者なら解除
         var pi = other.GetComponentInParent<PlayerInput>();
         if (pi != null && pi == activeInput)
         {
@@ -108,7 +146,6 @@ public class NpcDialogueTrigger : MonoBehaviour
 
     void TrySetActiveTalker(Collider2D other)
     {
-        // PlayerController or MawaruController を持つ相手だけ対象
         var pc = other.GetComponentInParent<PlayerController>();
         var mc = other.GetComponentInParent<MawaruController>();
         if (pc == null && mc == null) return;
@@ -119,7 +156,6 @@ public class NpcDialogueTrigger : MonoBehaviour
         activeInput = pi;
         inRange = true;
 
-        // 会話中に止めたいものをキャッシュ（開始時に使う）
         if (disableMovementScripts)
         {
             if (pc != null)
@@ -151,13 +187,11 @@ public class NpcDialogueTrigger : MonoBehaviour
         talking = true;
         index = 0;
 
-        // 操作停止（任意）
         if (disableMovementScripts && cachedLocks != null)
         {
             foreach (var b in cachedLocks) if (b) b.enabled = false;
         }
 
-        // その場固定（任意）
         if (freezeRigidbody2D && cachedBodies != null)
         {
             bodyBackups = new BodyBackup[cachedBodies.Length];
@@ -181,12 +215,10 @@ public class NpcDialogueTrigger : MonoBehaviour
             }
         }
 
-        // ActionMap を Dialog に切替
         prevMapName = pi.currentActionMap != null ? pi.currentActionMap.name : null;
         try { pi.SwitchCurrentActionMap(dialogMapName); }
-        catch { /* 無視 */ }
+        catch { }
 
-        // Dialog/Next を購読
         var map = pi.actions.FindActionMap(dialogMapName, throwIfNotFound: false);
         nextAction = map != null ? map.FindAction(dialogNextActionName, throwIfNotFound: false) : null;
 
@@ -202,6 +234,11 @@ public class NpcDialogueTrigger : MonoBehaviour
 
         dialogueRoot.SetActive(true);
         ShowLine(index);
+
+        if (followNpcHead)
+        {
+            UpdateDialoguePosition();
+        }
     }
 
     void OnNext(InputAction.CallbackContext ctx)
@@ -234,9 +271,38 @@ public class NpcDialogueTrigger : MonoBehaviour
         if (nameText) nameText.text = line.speakerName ?? "";
     }
 
+    void UpdateDialoguePosition()
+    {
+        if (dialogueRoot == null) return;
+        if (dialoguePanelRect == null) return;
+        if (canvasRect == null) return;
+
+        if (mainCamera == null)
+            mainCamera = Camera.main;
+
+        if (mainCamera == null)
+            return;
+
+        Transform anchor = headAnchor != null ? headAnchor : transform;
+        Vector3 worldPos = anchor.position + worldOffset;
+        Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+
+        if (screenPos.z < 0f)
+            return;
+
+        Vector2 localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            canvasRect,
+            screenPos,
+            canvasCamera,
+            out localPoint
+        );
+
+        dialoguePanelRect.anchoredPosition = localPoint + panelScreenOffset;
+    }
+
     void EndDialogue()
     {
-        // 入力解除
         if (nextAction != null)
         {
             nextAction.performed -= OnNext;
@@ -245,14 +311,12 @@ public class NpcDialogueTrigger : MonoBehaviour
 
         if (dialogueRoot) dialogueRoot.SetActive(false);
 
-        // ActionMap を元に戻す
         if (activeInput != null && !string.IsNullOrEmpty(prevMapName))
         {
             try { activeInput.SwitchCurrentActionMap(prevMapName); }
-            catch { /* 無視 */ }
+            catch { }
         }
 
-        // Rigidbody 戻す
         if (freezeRigidbody2D && cachedBodies != null && bodyBackups != null)
         {
             for (int i = 0; i < cachedBodies.Length; i++)
@@ -266,7 +330,6 @@ public class NpcDialogueTrigger : MonoBehaviour
             }
         }
 
-        // 操作を戻す
         if (disableMovementScripts && cachedLocks != null)
         {
             foreach (var b in cachedLocks) if (b) b.enabled = true;

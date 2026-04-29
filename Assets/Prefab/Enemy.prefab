@@ -16,6 +16,9 @@ GameObject:
   - component: {fileID: 1703721847612806267}
   - component: {fileID: -3113318909463577}
   - component: {fileID: 8953277020573028297}
+  - component: {fileID: -2941182375023640507}
+  - component: {fileID: 1953353681124126323}
+  - component: {fileID: -2251341473482973596}
   m_Layer: 13
   m_Name: Enemy
   m_TagString: Enemy
@@ -142,7 +145,7 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
@@ -173,7 +176,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDrag: 0
   m_AngularDrag: 0.05
-  m_GravityScale: 0
+  m_GravityScale: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -197,16 +200,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5aa8961956ce9843a114e4b0b345822, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bulletPrefab: {fileID: 2431169418744799914, guid: 0b454880f71ca8546a8d495ae0a3006b, type: 3}
-  bulletSpeed: 1
-  shootInterval: 7
-  firePoint: {fileID: 5499996155151553832}
   speed: 0.5
-  isToRight: 0
-  revTime: 2
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 8
+  moveRight: 1
+  flipOnTrigger: 1
+  flipOnCollision: 1
+  flipCooldown: 0.08
+  sideNormalThreshold: 0.55
 --- !u!114 &-3113318909463577
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -219,15 +218,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eb3f9021f4ca9c4dbe01e15f9049b7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hp: 3
-  maxHp: 3
-  dropItemPrefabs:
-  - {fileID: 1152122347758261031, guid: ec518d629d20277418385f87bd82d76c, type: 3}
+  hp: 5
+  maxHp: 5
   isGrabbed: 0
   isFlying: 0
   hpBar: {fileID: 8953277020573028297}
-  explosionSprite: {fileID: 0}
-  explosionDuration: 1
+  deathEffectPrefab: {fileID: 3334866903324842887, guid: f763a4fede8bfbe45aa79c14c1b1d6eb, type: 3}
+  deathEffectLife: 1.2
+  enableItemDrop: 0
+  dropPrefabs: []
+  dropChance: 1
+  dropMinCount: 1
+  dropMaxCount: 1
+  dropScatterRadius: 0.25
+  dropImpulse: {x: 1.5, y: 2}
+  dropInheritVelocity: 1
+  thrownHitLayers:
+    serializedVersion: 2
+    m_Bits: 136
+  landingLayers:
+    serializedVersion: 2
+    m_Bits: 8
+  reboundMul: 1.3
+  minReboundSpeed: 6
+  minUpSpeedOnGround: 4
+  minAirTimeAfterBounce: 0.06
+  groundCheckRadius: 0.08
+  depenetrationSkin: 0.03
+  stuckSpeedThreshold: 0.5
+  shellStunDefaultSeconds: 1
+  thrownDamage: 1
+  collisionDamageToOther: 1
 --- !u!114 &8953277020573028297
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -241,6 +262,71 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fillImage: {fileID: 1591930084128177598}
+--- !u!114 &-2941182375023640507
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2792608014359903621}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8df3e8601eb0d6c47ad47297f323f857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  thrownLayerName: EnemyThrown
+  enemyLayers:
+    serializedVersion: 2
+    m_Bits: 8192
+  damageToOther: 2
+  damageToSelf: 0
+  hitCooldown: 0.08
+  reboundMul: 1.2
+  minReboundSpeed: 6
+  minUpSpeedOnGround: 4
+  pushOutDistance: 0.06
+  ignoreCollisionSeconds: 0.12
+  disableOtherAITemporarily: 1
+  disableOtherAISeconds: 0.1
+--- !u!114 &1953353681124126323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2792608014359903621}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 632ceb62e20c7d244869a9301fa3a0e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  normalLayerName: Enemy
+  thrownLayerName: EnemyThrown
+  applyToChildren: 1
+  flyingNames:
+  - isFlying
+  - IsFlying
+  - flying
+  - IsThrown
+  - isThrown
+--- !u!114 &-2251341473482973596
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2792608014359903621}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 214194b2103e23944889ebce06462c06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  coinPrefab: {fileID: 4401374367486816390, guid: afe7f32a3e2ffcc449e5f1ed0d2cc61b, type: 3}
+  healPrefab: {fileID: 8514312769144168060, guid: fab7ccfb09d4a6b448bef6b31db7fe90, type: 3}
+  dropChance: 1
+  healDropRate: 0.5
+  spawnOffset: {x: 0, y: 0.15}
+  scatterX: 0.25
 --- !u!1 &4593636888968998496
 GameObject:
   m_ObjectHideFlags: 0

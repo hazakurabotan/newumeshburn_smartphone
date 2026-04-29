@@ -1,29 +1,64 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections;
+using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
 public class Enemy : MonoBehaviour
 {
+    // ===== HP =====
     [Header("HP")]
     public int hp = 3;
     public int maxHp = 3;
-
-    // Rope用
     public bool isGrabbed = false;
     public bool isFlying = false;
 
+    // Enemy.cs の class Enemy 内に追加（場所はどこでもOK）
+    //
+    // 例：public bool isFlying = false; のすぐ下あたりが分かりやすい
+    public bool IsThrown => isFlying;
+
+    [Tooltip("HPバー（使っているなら入れる）")]
     public EnemyHpBarController hpBar;
 
+    // ===== Death =====
+    [Header("Death")]
+    public GameObject deathEffectPrefab;
+    public float deathEffectLife = 1.2f;
+
+    // ===== Item Drop =====
+    [Header("Item Drop")]
+    [Tooltip("倒したときにアイテムを落とす")]
+    public bool enableItemDrop = false;
+
+    [Tooltip("落とすPrefab（item_2 など）")]
+    public GameObject[] dropPrefabs;
+
+    [Range(0f, 1f)]
+    public float dropChance = 1f;
+
+    [Min(0)]
+    public int dropMinCount = 1;
+
+    [Min(0)]
+    public int dropMaxCount = 1;
+
+    [Tooltip("落ちる位置のばらけ（半径）")]
+    public float dropScatterRadius = 0.25f;
+
+    [Tooltip("落とした瞬間にちょい飛ばす（X=横/Y=上）")]
+    public Vector2 dropImpulse = new Vector2(1.5f, 2.0f);
+
+    [Tooltip("敵の速度を少し引き継ぐ")]
+    public bool dropInheritVelocity = true;
+
+    // ===== Thrown Collision =====
     [Header("Thrown Collision")]
-    public LayerMask thrownHitLayers;     // Ground + Wall
-    public LayerMask landingLayers;       // Ground only
+    public LayerMask thrownHitLayers;   // Ground, Wall
+    public LayerMask landingLayers;     // Ground
 
     [Header("Bounce Tuning")]
     public float reboundMul = 1.3f;
-    public float minReboundSpeed = 6.0f;
-
-    [Tooltip("地面っぽい法線（normal.yが大きい）に当たった時、最低でもこの上向き速度を保証する")]
-    public float minUpSpeedOnGround = 4.0f;
-
+    public float minReboundSpeed = 6f;
+    public float minUpSpeedOnGround = 4f;
     public float minAirTimeAfterBounce = 0.06f;
     public float groundCheckRadius = 0.08f;
 
@@ -31,287 +66,311 @@ public class Enemy : MonoBehaviour
     public float depenetrationSkin = 0.03f;
     public float stuckSpeedThreshold = 0.5f;
 
-    Rigidbody2D rb;
-    Collider2D myCol;
-    Coroutine landCo;
-    bool bouncedOnce = false;
-
-    // ★衝突「直前」の速度を保持（ここが横滑り解消の肝）
-    Vector2 lastFlyingVelocity = Vector2.zero;
-
-    // ---------------- Shell Stun ----------------
     [Header("Shell Stun")]
-    [SerializeField] float shellStunDefaultSeconds = 1.0f;
+    public float shellStunDefaultSeconds = 1f;
 
-    float _shellStunEndTime = -1f;
-    bool _shellStunned = false;
+    // ===== 既存挙動（投げで当たった時のダメージ系）=====
+    // ※これを消すと「今まで通り」の投げ挙動が変わるので維持
+    [Header("Thrown Damage (keep existing behavior)")]
+    public int thrownDamage = 1;            // 壁/地面に当たった時に自分が受けるダメージ
+    public int collisionDamageToOther = 1;  // 投げ中に別の敵に当たった時、相手に入れるダメージ
 
-    // RopeHead から参照する用（スタン中だけ掴む/投げる判定）
-    public bool IsShellStunned => _shellStunned && Time.time < _shellStunEndTime;
+    // ===== runtime =====
+    Rigidbody2D rb;
+    SpriteRenderer sr;
+
+    bool isDead = false;
+    bool shellStunned = false;
+    float shellStunTimer = 0f;
+
+    float lastBounceTime = -999f;
+
+    public bool IsGrabbed => isGrabbed;
+    public bool IsFlying => isFlying;
+    public bool IsShellStunned => shellStunned;
+    public Rigidbody2D Rb => rb;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        myCol = GetComponent<Collider2D>();
+        sr = GetComponent<SpriteRenderer>();
+
+        if (maxHp < 1) maxHp = 1;
+        hp = Mathf.Clamp(hp, 0, maxHp);
+
+        // 初期HPバー更新（存在する時だけ）
+        TryUpdateHpBar();
     }
 
-    void Start()
+    void Update()
     {
-        if (hpBar) hpBar.SetHp(hp, maxHp);
+        // シェルスタンの解除
+        if (shellStunned)
+        {
+            shellStunTimer -= Time.deltaTime;
+            if (shellStunTimer <= 0f)
+            {
+                shellStunned = false;
+                shellStunTimer = 0f;
+
+                // 掴まれ中/投げ中はAI止めたまま
+                if (!isGrabbed && !isFlying)
+                    SetEnemyAIMoveEnabled(true);
+            }
+        }
     }
 
     // ===== ダメージ =====
-    public void TakeDamage(int amount, string cause = "other")
+    public void TakeDamage(int damage)
     {
-        // 掴み中（投げ飛行じゃない）に被弾無効にしたいならこのまま
-        if (isGrabbed && !isFlying) return;
-
-        hp -= amount;
-        if (hpBar) hpBar.SetHp(hp, maxHp);
-
-        if (hp <= 0) Die(cause);
+        TakeDamage(damage, "Unknown");
     }
 
-    void Die(string cause)
+    public void TakeDamage(int damage, string source)
     {
+        if (isDead) return;
+        if (damage <= 0) return;
+
+        hp -= damage;
+        if (hp < 0) hp = 0;
+
+        TryUpdateHpBar();
+
+        if (hp <= 0)
+        {
+            Die();
+        }
+    }
+
+    void TryUpdateHpBar()
+    {
+        if (hpBar == null) return;
+
+        // EnemyHpBarController 側に SetHp(int hp, int maxHp) がある想定
+        // （もし名前が違う場合は、そっちに合わせる）
+        hpBar.SetHp(hp, maxHp);
+    }
+
+    void Die()
+    {
+        if (isDead) return;
+        isDead = true;
+
+        // アイテムドロップ
+        SpawnDrops();
+
+        // 死亡エフェクト
+        if (deathEffectPrefab)
+        {
+            var fx = Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
+            if (deathEffectLife > 0f) Destroy(fx, deathEffectLife);
+        }
+
         Destroy(gameObject);
     }
 
-    // ===== Rope投げ開始 =====
-    public void BeginThrow()
+    void SpawnDrops()
     {
-        isFlying = true;
-        bouncedOnce = false;
+        if (!enableItemDrop) return;
+        if (dropPrefabs == null || dropPrefabs.Length == 0) return;
+        if (Random.value > dropChance) return;
 
-        // 投げ飛行中はAIが速度を触らないように止める
-        SetEnemyAIMoveEnabled(false);
+        int min = Mathf.Max(0, dropMinCount);
+        int max = Mathf.Max(min, dropMaxCount);
+        int count = Random.Range(min, max + 1);
+        if (count <= 0) return;
 
-        // 投げた瞬間にスタンの「速度0固定」が邪魔しないよう解除
-        ClearShellStun();
+        Vector2 basePos = transform.position;
+        Vector2 inheritVel = (dropInheritVelocity && rb != null) ? rb.velocity : Vector2.zero;
 
-        lastFlyingVelocity = rb ? rb.velocity : Vector2.zero;
+        for (int i = 0; i < count; i++)
+        {
+            var prefab = dropPrefabs[Random.Range(0, dropPrefabs.Length)];
+            if (!prefab) continue;
 
-        if (landCo != null) StopCoroutine(landCo);
-        landCo = null;
+            Vector2 offset = Random.insideUnitCircle * dropScatterRadius;
+            var go = Instantiate(prefab, basePos + offset, Quaternion.identity);
+
+            var dropRb = go.GetComponent<Rigidbody2D>();
+            if (dropRb != null)
+            {
+                float dir = (sr != null && sr.flipX) ? -1f : 1f;
+                Vector2 impulse = new Vector2(dropImpulse.x * dir, dropImpulse.y);
+                dropRb.velocity = inheritVel;
+                dropRb.AddForce(impulse, ForceMode2D.Impulse);
+            }
+        }
     }
 
-    // ★スタン解除（AI再開は “掴み/飛行じゃない時だけ”）
+    // ===== シェルスタン =====
+    public void ApplyShellStun(float seconds)
+    {
+        if (seconds <= 0f) seconds = shellStunDefaultSeconds;
+        shellStunned = true;
+        shellStunTimer = seconds;
+
+        // その場で止める
+        SetEnemyAIMoveEnabled(false);
+    }
+
     public void ClearShellStun()
     {
-        if (!_shellStunned) return;
-
-        _shellStunned = false;
-        _shellStunEndTime = -1f;
+        shellStunned = false;
+        shellStunTimer = 0f;
 
         if (!isGrabbed && !isFlying)
             SetEnemyAIMoveEnabled(true);
     }
 
-    // ===== Shell スタン（最後に当たった時から seconds 秒：上書き）=====
-    public void ApplyShellStun(float seconds)
+    // RopeHead から呼ばれる想定
+    public void BeginThrow()
     {
-        if (seconds <= 0f) seconds = shellStunDefaultSeconds;
+        isGrabbed = false;
+        isFlying = true;
 
-        _shellStunEndTime = Time.time + seconds;
+        lastBounceTime = -999f;
 
-        if (!_shellStunned)
-        {
-            _shellStunned = true;
-            SetEnemyAIMoveEnabled(false);
-        }
-
-        // 速度0は「その瞬間だけ」OK
-        if (rb)
-        {
-            rb.velocity = Vector2.zero;
-            rb.angularVelocity = 0f;
-        }
+        // 投げ中はAIに速度を上書きさせない
+        SetEnemyAIMoveEnabled(false);
     }
 
-    void FixedUpdate()
-    {
-        // ★飛行中は「衝突直前の速度」を毎FixedUpdateで更新しておく
-        if (isFlying && rb)
-        {
-            lastFlyingVelocity = rb.velocity;
-        }
-
-        // スタンで止めるのは「通常行動中だけ」
-        if (_shellStunned && !isFlying && !isGrabbed && rb)
-        {
-            rb.velocity = Vector2.zero;
-            rb.angularVelocity = 0f;
-        }
-
-        // スタン終了
-        if (_shellStunned && Time.time >= _shellStunEndTime)
-        {
-            _shellStunned = false;
-
-            if (!isGrabbed && !isFlying)
-                SetEnemyAIMoveEnabled(true);
-        }
-    }
-
+    // ===== AI on/off（既存維持）=====
     void SetEnemyAIMoveEnabled(bool enabled)
     {
-        var straight = GetComponent<EnemyStraightMouth>();
-        if (straight) straight.enabled = enabled;
+        // ここは「あなたの敵AIスクリプト」に合わせて維持
+        var a = GetComponent<EnemyStraightMouth>();
+        if (a) a.enabled = enabled;
 
-        var floatShooter = GetComponent<EnemyFloatShooter>();
-        if (floatShooter) floatShooter.enabled = enabled;
+        var b = GetComponent<EnemyFloatShooter>();
+        if (b) b.enabled = enabled;
 
-        var boomerang = GetComponent<EnemyBoomerangThrower>();
-        if (boomerang) boomerang.enabled = enabled;
+        var c = GetComponent<EnemyBoomerangThrower>();
+        if (c) c.enabled = enabled;
+
+        var d = GetComponent<EnemyController>();
+        if (d) d.enabled = enabled;
     }
 
-    // ========= 衝突入口 =========
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        if (!isFlying) return;
-
-        Vector2 p = transform.position;
-        Vector2 cp = other.ClosestPoint(p);
-        Vector2 n = (p - cp);
-        if (n.sqrMagnitude < 0.0001f) n = Vector2.up;
-        n.Normalize();
-
-        HandleFlyingHit(other.gameObject, n);
-    }
-
+    // ===== 投げ中の当たり処理（既存方針維持）=====
     void OnCollisionEnter2D(Collision2D col)
     {
         if (!isFlying) return;
 
-        Vector2 n = col.contactCount > 0 ? col.GetContact(0).normal : Vector2.up;
-        HandleFlyingHit(col.gameObject, n);
+        int layer = col.collider.gameObject.layer;
+        if ((thrownHitLayers.value & (1 << layer)) == 0) return;
 
-        // 貼り付き対策：速度が極小で接触したら少し押し出す
-        if (rb && rb.velocity.magnitude <= stuckSpeedThreshold)
-        {
-            rb.position += n * depenetrationSkin;
-        }
+        HandleThrownCollision(col.collider, col);
     }
 
-    // ========= 投げ飛行ヒット本体 =========
-    void HandleFlyingHit(GameObject hitObj, Vector2 normal)
+    void OnTriggerEnter2D(Collider2D other)
     {
-        if (!isFlying || rb == null) return;
+        if (!isFlying) return;
 
-        // 他の敵に当たった：その場停止しないで「行動再開」させる
-        if (hitObj.CompareTag("Enemy"))
+        int layer = other.gameObject.layer;
+        if ((thrownHitLayers.value & (1 << layer)) == 0) return;
+
+        HandleThrownCollision(other, null);
+    }
+
+    void HandleThrownCollision(Collider2D other, Collision2D col)
+    {
+        if (!isFlying) return;
+
+        // 連続ヒット防止
+        if (Time.time - lastBounceTime < minAirTimeAfterBounce) return;
+
+        // 1) 別の敵に当たった（投げの攻撃）
+        var otherEnemy = other.GetComponentInParent<Enemy>();
+        if (otherEnemy != null && otherEnemy != this)
         {
-            var otherEnemy = hitObj.GetComponentInParent<Enemy>();
-            if (otherEnemy != null && otherEnemy != this)
-                otherEnemy.TakeDamage(1, "throw_hit");
+            if (collisionDamageToOther > 0)
+            {
+                otherEnemy.TakeDamage(collisionDamageToOther, "ThrownEnemy");
+            }
 
-            // 自分もダメージ（必要なら消してOK）
-            TakeDamage(1, "throw");
+            if (thrownDamage > 0)
+            {
+                TakeDamage(thrownDamage, "ThrownSelf");
+                if (isDead) return;
+            }
 
-            // ★ここが要望対応：停止せず即再開（HP残ってたら）
-            EndFlyingAndResumeNow();
+            // バウンド（法線が取れれば反射、なければX反転）
+            Vector2 normal = Vector2.right;
+            if (col != null && col.contactCount > 0) normal = col.GetContact(0).normal;
+            BounceByNormal(normal, isGround: false);
             return;
         }
 
-        // 壁/床
-        if ((thrownHitLayers.value & (1 << hitObj.layer)) != 0)
+        // 2) 着地判定（Groundなど）
+        int layer = other.gameObject.layer;
+        bool isLandingLayer = (landingLayers.value & (1 << layer)) != 0;
+        if (isLandingLayer && IsGrounded())
         {
-            TakeDamage(1, "throw");
+            isFlying = false;
 
-            // ★反射計算は「衝突直前の速度」でやる（横滑りの原因潰し）
-            Vector2 v = lastFlyingVelocity;
-            if (v.sqrMagnitude < 0.0001f) v = rb.velocity;
+            // 掴まれ中/スタン中でなければAI再開
+            if (!isGrabbed && !shellStunned)
+                SetEnemyAIMoveEnabled(true);
 
-            // 1回目は反射
-            if (!bouncedOnce)
-            {
-                bouncedOnce = true;
-
-                Vector2 rv = Vector2.Reflect(v, normal);
-
-                // 最低速度保証（弱すぎバウンド/貼り付き防止）
-                float sp = rv.magnitude;
-                if (sp < minReboundSpeed)
-                    rv = (sp < 0.0001f ? normal : rv.normalized) * minReboundSpeed;
-
-                // ★地面っぽい法線なら「上向き」を最低保証（斜め投げ→横滑り抑制）
-                if (normal.y >= 0.6f && rv.y < minUpSpeedOnGround)
-                    rv.y = minUpSpeedOnGround;
-
-                rb.velocity = rv * reboundMul;
-
-                // 少し押し出して“角で止まる”を減らす
-                rb.position += normal * depenetrationSkin;
-
-                StartLandingFlow();
-            }
-            else
-            {
-                // 2回目以降は着地待ちへ（ここは好みで調整OK）
-                StartLandingFlow();
-            }
-        }
-    }
-
-    void EndFlyingAndResumeNow()
-    {
-        isFlying = false;
-        isGrabbed = false;
-        bouncedOnce = false;
-
-        if (landCo != null)
-        {
-            StopCoroutine(landCo);
-            landCo = null;
+            return;
         }
 
-        // Float系は基準点ズレ対策
-        var floatShooter = GetComponent<EnemyFloatShooter>();
-        if (floatShooter) floatShooter.ResetFloatBase();
+        // 3) 壁/地面に当たった（投げ中は今まで通り「自分がダメージ」+ バウンド）
+        if (thrownDamage > 0)
+        {
+            TakeDamage(thrownDamage, "ThrownWall");
+            if (isDead) return;
+        }
 
-        // スタン中じゃなくHP残ってたら再開
-        if (!IsShellStunned && hp > 0)
-            SetEnemyAIMoveEnabled(true);
+        Vector2 hitNormal = Vector2.right;
+        bool ground = false;
+
+        if (col != null && col.contactCount > 0)
+        {
+            hitNormal = col.GetContact(0).normal;
+            ground = hitNormal.y > 0.5f;
+        }
+        else
+        {
+            // Triggerの場合：ざっくり「下にあるなら地面扱い」に寄せる
+            ground = IsGrounded();
+            hitNormal = ground ? Vector2.up : (rb.velocity.x >= 0 ? Vector2.left : Vector2.right);
+        }
+
+        BounceByNormal(hitNormal, ground);
     }
 
-    // ========= 「地面に接してる時だけ」行動再開 =========
-    void StartLandingFlow()
+    bool IsGrounded()
     {
-        isFlying = true;
-        isGrabbed = false;
+        // 自分の足元（Collider中心より少し下）で円チェック
+        Vector2 origin = rb.position;
+        origin.y -= 0.2f;
 
-        if (landCo != null) StopCoroutine(landCo);
-        landCo = StartCoroutine(LandThenResume());
+        // landingLayers が未設定でも ground 判定が欲しいので thrownHitLayers も混ぜる
+        LayerMask mask = landingLayers.value != 0 ? landingLayers : thrownHitLayers;
+        return Physics2D.OverlapCircle(origin, groundCheckRadius, mask);
     }
 
-    IEnumerator LandThenResume()
+    void BounceByNormal(Vector2 normal, bool isGround)
     {
-        yield return new WaitForSeconds(minAirTimeAfterBounce);
+        if (rb == null) return;
 
-        while (this && !IsTouchingLandingGround())
-            yield return null;
+        Vector2 v = rb.velocity;
+        Vector2 reflected = Vector2.Reflect(v, normal) * reboundMul;
 
-        if (!this) yield break;
+        if (reflected.magnitude < minReboundSpeed)
+            reflected = reflected.normalized * minReboundSpeed;
 
-        isFlying = false;
-        isGrabbed = false;
+        if (isGround && reflected.y < minUpSpeedOnGround)
+            reflected.y = minUpSpeedOnGround;
 
-        var floatShooter = GetComponent<EnemyFloatShooter>();
-        if (floatShooter) floatShooter.ResetFloatBase();
+        rb.velocity = reflected;
+        lastBounceTime = Time.time;
 
-        if (!IsShellStunned && hp > 0)
-            SetEnemyAIMoveEnabled(true);
-
-        landCo = null;
-    }
-
-    bool IsTouchingLandingGround()
-    {
-        if (!myCol) return false;
-
-        Bounds b = myCol.bounds;
-        Vector2 foot = new Vector2(b.center.x, b.min.y - 0.02f);
-
-        return Physics2D.OverlapCircle(foot, groundCheckRadius, landingLayers) != null;
+        // はまり防止（押し出し）
+        if (rb.velocity.magnitude < stuckSpeedThreshold)
+        {
+            rb.position += normal * depenetrationSkin;
+        }
     }
 }

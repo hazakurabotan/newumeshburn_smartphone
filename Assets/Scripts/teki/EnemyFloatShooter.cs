@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class EnemyFloatShooter : MonoBehaviour
 {
     [Header("Render")]
@@ -10,7 +10,7 @@ public class EnemyFloatShooter : MonoBehaviour
 
     [Header("Move")]
     public float moveSpeed = 1.5f;
-    public bool moveRight = false;
+    public bool moveRight = true;
     public float floatAmplitude = 0.25f;
     public float floatFrequency = 1.2f;
 
@@ -21,88 +21,157 @@ public class EnemyFloatShooter : MonoBehaviour
     public float bulletSpeed = 6f;
     public float bulletLife = 3f;
 
-    [Header("Facing")]
-    public bool spriteDefaultFacesRight = true;
+    [Header("Wall Flip (Non-Trigger walls too)")]
+    [Tooltip("回転部屋など“Triggerじゃない壁”も前方Castで検知して反転")]
+    public bool flipWhenBlocked = true;
+
+    [Tooltip("前方にこれだけCastして壁を検知")]
+    public float wallCheckDistance = 0.12f;
+
+    [Tooltip("反転直後に少しだけ押し戻す（めり込みで停止するの防止）")]
+    public float unstuckDistance = 0.03f;
+
+    [Tooltip("連続反転（ガタガタ）防止クールダウン")]
+    public float flipCooldown = 0.10f;
 
     Rigidbody2D rb;
+    Collider2D col;
     Enemy enemy;
-    Vector2 basePos;
-    float animT;
-    float shootT;
+
+    float baseY;
+    float animTimer;
+    int animIndex;
+
+    float shootTimer;
+
+    float flipCooldownTimer;
+
+    // Cast用
+    readonly RaycastHit2D[] castHits = new RaycastHit2D[8];
+    ContactFilter2D castFilter;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        rb.gravityScale = 0f;
-        rb.freezeRotation = true;
-
-        enemy = GetComponent<Enemy>();
+        col = GetComponent<Collider2D>();
+        enemy = GetComponentInParent<Enemy>();
 
         if (!spriteRenderer) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-        basePos = rb.position;
-    }
 
-    void Update()
-    {
+        baseY = rb.position.y;
 
-        // ★掴み中/投げ飛行中は一切更新しない（アニメも弾も止める）
-        if (enemy != null && (enemy.isGrabbed || enemy.isFlying))
-            return;
-
-        // アニメ
-        if (flySprites != null && flySprites.Length > 0 && spriteRenderer)
+        // Triggerは無視して“固い壁”だけ見る
+        castFilter = new ContactFilter2D
         {
-            animT += Time.deltaTime * Mathf.Max(0.1f, animFps);
-            int idx = (int)animT % flySprites.Length;
-            spriteRenderer.sprite = flySprites[idx];
-        }
-
-        // 発射
-        shootT += Time.deltaTime;
-        if (shootT >= shootInterval)
-        {
-            shootT = 0f;
-            Shoot();
-        }
+            useTriggers = false,
+            useLayerMask = false // ★レイヤーに依存しない（RoomModuleがDefaultでも検知）
+        };
     }
 
     void FixedUpdate()
     {
-        // ★掴み中/投げ飛行中は MovePosition しない（これがスタック/停止の原因）
-        if (enemy != null && (enemy.isGrabbed || enemy.isFlying))
-            return;
+        if (flipCooldownTimer > 0f) flipCooldownTimer -= Time.fixedDeltaTime;
 
-        float sign = moveRight ? 1f : -1f;
+        // ★投げられ中 / 掴まれ中は Enemy.cs の物理に任せる（AI移動で上書きしない）
+        if (enemy != null && (enemy.IsThrown || enemy.IsGrabbed)) return;
 
-        float x = rb.position.x + sign * moveSpeed * Time.fixedDeltaTime;
-        float y = basePos.y + Mathf.Sin(Time.time * floatFrequency * Mathf.PI * 2f) * floatAmplitude;
+        // 進行方向
+        float dirX = moveRight ? 1f : -1f;
 
-        rb.MovePosition(new Vector2(x, y));
+        // ★前方が塞がってたら反転（回転部屋はTriggerじゃないのでここが効く）
+        if (flipWhenBlocked && flipCooldownTimer <= 0f)
+        {
+            if (IsBlocked(dirX))
+            {
+                moveRight = !moveRight;
+                flipCooldownTimer = flipCooldown;
 
-        if (spriteRenderer)
-            spriteRenderer.flipX = spriteDefaultFacesRight ? (sign < 0f) : (sign > 0f);
+                // 少し押し戻してめり込み解除
+                rb.position += new Vector2(-dirX * unstuckDistance, 0f);
+
+                // 反転後のdirを更新
+                dirX = moveRight ? 1f : -1f;
+            }
+        }
+
+        // 移動 + 浮遊
+        float y = baseY + Mathf.Sin(Time.time * floatFrequency) * floatAmplitude;
+        Vector2 pos = rb.position;
+        pos.x += dirX * moveSpeed * Time.fixedDeltaTime;
+        pos.y = y;
+
+        rb.MovePosition(pos);
+
+        // 見た目の向き
+        if (spriteRenderer) spriteRenderer.flipX = moveRight;
+
+        // 弾
+        shootTimer += Time.fixedDeltaTime;
+        if (shootTimer >= shootInterval)
+        {
+            shootTimer = 0f;
+            TryShoot(dirX);
+        }
     }
 
-    void Shoot()
+    bool IsBlocked(float dirX)
+    {
+        // 近すぎると誤判定するので、ほんの少し前からCast
+        Vector2 dir = new Vector2(dirX, 0f);
+
+        int hitCount = col.Cast(dir, castFilter, castHits, wallCheckDistance);
+        if (hitCount <= 0) return false;
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            var h = castHits[i];
+            if (h.collider == null) continue;
+
+            // 自分の子/親は無視（念のため）
+            if (h.collider.transform.IsChildOf(transform)) continue;
+
+            // プレイヤー系は無視（ぶつかって反転したくない）
+            if (h.collider.GetComponentInParent<PlayerController>() != null) continue;
+            if (h.collider.GetComponentInParent<MawaruController>() != null) continue;
+
+            // “敵同士”はレイヤー設定で基本当たらない想定だが、当たってたら無視
+            if (h.collider.GetComponentInParent<Enemy>() != null) continue;
+
+            // ここまで来たら壁扱い（RoomModule/回転部屋もここに入る）
+            return true;
+        }
+
+        return false;
+    }
+
+    void Update()
+    {
+        // アニメ（見た目だけ）
+        if (flySprites != null && flySprites.Length > 0 && spriteRenderer != null)
+        {
+            animTimer += Time.deltaTime;
+            float frameTime = (animFps <= 0f) ? 0.2f : (1f / animFps);
+
+            if (animTimer >= frameTime)
+            {
+                animTimer -= frameTime;
+                animIndex = (animIndex + 1) % flySprites.Length;
+                spriteRenderer.sprite = flySprites[animIndex];
+            }
+        }
+    }
+
+    void TryShoot(float dirX)
     {
         if (!bulletPrefab || !firePoint) return;
 
         var go = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
-        Vector2 dir = (moveRight ? Vector2.right : Vector2.left);
-
-        var b = go.GetComponent<EnemyBullet>();
-        if (b) b.Launch(dir, bulletSpeed, bulletLife);
-        else
+        var rb2 = go.GetComponent<Rigidbody2D>();
+        if (rb2 != null)
         {
-            var rb2 = go.GetComponent<Rigidbody2D>();
-            if (rb2) rb2.velocity = dir * bulletSpeed;
-            Destroy(go, bulletLife);
+            rb2.velocity = new Vector2(dirX * bulletSpeed, 0f);
         }
-    }
 
-    // ★投げ終了後にふわふわ基準位置を更新したい時に呼ぶ
-    public void ResetFloatBase()
-    {
-        basePos = rb.position;
+        Destroy(go, bulletLife);
     }
 }
