@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class EnemyController : MonoBehaviour
 {
     [Header("Move")]
@@ -8,49 +8,162 @@ public class EnemyController : MonoBehaviour
     public bool moveRight = true;
 
     [Header("Wall Check (Trigger)")]
-    [Tooltip("壁検知用のTriggerに当たったら反転（従来通り）")]
+    [Tooltip("壁検知用Triggerに当たったら反転する")]
     public bool flipOnTrigger = true;
 
     [Header("Wall Check (Collision)")]
-    [Tooltip("回転部屋など“Triggerじゃない壁”に当たった時も反転する")]
+    [Tooltip("壁など、Triggerではない横衝突でも反転する")]
     public bool flipOnCollision = true;
 
-    [Tooltip("連続反転（ガタガタ）防止のクールダウン")]
+    [Tooltip("連続反転を防ぐクールダウン")]
     public float flipCooldown = 0.08f;
 
-    [Tooltip("横方向の接触（壁）とみなす法線しきい値。大きいほど厳しめ")]
+    [Tooltip("横方向の接触を壁とみなすしきい値")]
     [Range(0.0f, 1.0f)]
     public float sideNormalThreshold = 0.55f;
 
+    [Header("Ledge / Edge Turn")]
+    [Tooltip("ONにすると、地面の端で落ちる前に反転する")]
+    public bool flipAtLedge = true;
+
+    [Tooltip("足元より少し前を見る距離。落ちるなら大きくする")]
+    public float edgeCheckForwardOffset = 0.12f;
+
+    [Tooltip("足元から下に地面を探す距離。地面を検出しないなら大きくする")]
+    public float edgeCheckDownDistance = 0.55f;
+
+    [Tooltip("足元から少し上の位置からRayを出す")]
+    public float edgeRayStartYOffset = 0.12f;
+
+    [Tooltip("地面判定に使うLayer。基本は Ground を入れる")]
+    public LayerMask groundLayer;
+
+    [Tooltip("Ground Layerが未設定なら、自動で Ground レイヤーを探す")]
+    public bool autoUseGroundLayerIfEmpty = true;
+
+    [Tooltip("端で反転した時に少し内側へ戻す距離")]
+    public float ledgePushBack = 0.03f;
+
     Rigidbody2D rb;
-    Enemy enemy; // 投げられ中判定に使う（なければnull）
+    Collider2D bodyCollider;
+    SpriteRenderer spriteRenderer;
+    Enemy enemy;
 
     float flipCooldownTimer;
+    bool warnedGroundLayerEmpty = false;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        bodyCollider = GetComponent<Collider2D>();
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         enemy = GetComponentInParent<Enemy>();
+
+        AutoSetGroundLayerIfNeeded();
+        UpdateVisualDirection();
+    }
+
+    void OnValidate()
+    {
+        if (speed < 0f) speed = 0f;
+        if (flipCooldown < 0f) flipCooldown = 0f;
+        if (edgeCheckForwardOffset < 0f) edgeCheckForwardOffset = 0f;
+        if (edgeCheckDownDistance < 0.01f) edgeCheckDownDistance = 0.01f;
+        if (edgeRayStartYOffset < 0f) edgeRayStartYOffset = 0f;
+        if (ledgePushBack < 0f) ledgePushBack = 0f;
     }
 
     void FixedUpdate()
     {
-        if (flipCooldownTimer > 0f) flipCooldownTimer -= Time.fixedDeltaTime;
+        if (rb == null) return;
 
-        // ★投げられ中 / 掴まれ中は Enemy.cs 側の物理に任せる
-        if (enemy != null && (enemy.IsThrown || enemy.IsGrabbed)) return;
+        if (flipCooldownTimer > 0f)
+            flipCooldownTimer -= Time.fixedDeltaTime;
+
+        if (enemy != null)
+        {
+            if (enemy.IsDead)
+            {
+                rb.velocity = Vector2.zero;
+                return;
+            }
+
+            if (enemy.IsThrown || enemy.IsFlying || enemy.IsGrabbed || enemy.IsShellStunned || enemy.IsDamageStunned)
+                return;
+        }
+
+        AutoSetGroundLayerIfNeeded();
+
+        if (flipAtLedge && IsAtLedge() && flipCooldownTimer <= 0f)
+        {
+            Flip();
+            flipCooldownTimer = flipCooldown;
+
+            float pushDir = moveRight ? 1f : -1f;
+            rb.position += new Vector2(pushDir * ledgePushBack, 0f);
+        }
 
         float dir = moveRight ? 1f : -1f;
         rb.velocity = new Vector2(dir * speed, rb.velocity.y);
+
+        UpdateVisualDirection();
+    }
+
+    void AutoSetGroundLayerIfNeeded()
+    {
+        if (!autoUseGroundLayerIfEmpty) return;
+        if (groundLayer.value != 0) return;
+
+        int groundLayerIndex = LayerMask.NameToLayer("Ground");
+        if (groundLayerIndex >= 0)
+        {
+            groundLayer = 1 << groundLayerIndex;
+        }
+    }
+
+    bool IsAtLedge()
+    {
+        if (bodyCollider == null) return false;
+
+        if (groundLayer.value == 0)
+        {
+            if (!warnedGroundLayerEmpty)
+            {
+                warnedGroundLayerEmpty = true;
+                Debug.LogWarning($"[{nameof(EnemyController)}] Ground Layer が未設定です。{name} の Ground Layer に Ground を設定してください。", this);
+            }
+
+            return false;
+        }
+
+        Bounds b = bodyCollider.bounds;
+        float dir = moveRight ? 1f : -1f;
+
+        Vector2 rayOrigin = new Vector2(
+            b.center.x + dir * (b.extents.x + edgeCheckForwardOffset),
+            b.min.y + edgeRayStartYOffset
+        );
+
+        RaycastHit2D hit = Physics2D.Raycast(
+            rayOrigin,
+            Vector2.down,
+            edgeCheckDownDistance,
+            groundLayer
+        );
+
+        return hit.collider == null;
     }
 
     public void Flip()
     {
         moveRight = !moveRight;
+        UpdateVisualDirection();
+    }
 
-        // 見た目
-        var sr = GetComponentInChildren<SpriteRenderer>();
-        if (sr) sr.flipX = moveRight;
+    void UpdateVisualDirection()
+    {
+        if (spriteRenderer != null)
+            spriteRenderer.flipX = moveRight;
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -58,9 +171,13 @@ public class EnemyController : MonoBehaviour
         if (!flipOnTrigger) return;
         if (other == null) return;
         if (!other.isTrigger) return;
+        if (flipCooldownTimer > 0f) return;
 
-        // ★投げられ中 / 掴まれ中は反転させない
-        if (enemy != null && (enemy.IsThrown || enemy.IsGrabbed)) return;
+        if (enemy != null)
+        {
+            if (enemy.IsDead) return;
+            if (enemy.IsThrown || enemy.IsFlying || enemy.IsGrabbed || enemy.IsShellStunned || enemy.IsDamageStunned) return;
+        }
 
         Flip();
         flipCooldownTimer = flipCooldown;
@@ -83,17 +200,19 @@ public class EnemyController : MonoBehaviour
         if (col == null || col.collider == null) return;
         if (col.collider.isTrigger) return;
 
-        // ★投げられ中 / 掴まれ中は反転させない（Enemy.csの投げ処理を守る）
-        if (enemy != null && (enemy.IsThrown || enemy.IsGrabbed)) return;
+        if (enemy != null)
+        {
+            if (enemy.IsDead) return;
+            if (enemy.IsThrown || enemy.IsFlying || enemy.IsGrabbed || enemy.IsShellStunned || enemy.IsDamageStunned) return;
+        }
 
-        // プレイヤー系に当たっただけでは反転しない（必要なら）
         if (col.collider.GetComponentInParent<PlayerController>() != null) return;
         if (col.collider.GetComponentInParent<MawaruController>() != null) return;
 
-        // 壁（横方向の接触）なら反転
         for (int i = 0; i < col.contactCount; i++)
         {
-            var c = col.GetContact(i);
+            ContactPoint2D c = col.GetContact(i);
+
             if (Mathf.Abs(c.normal.x) >= sideNormalThreshold)
             {
                 Flip();
@@ -101,5 +220,23 @@ public class EnemyController : MonoBehaviour
                 return;
             }
         }
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        Collider2D col = GetComponent<Collider2D>();
+        if (col == null) return;
+
+        Bounds b = col.bounds;
+        float dir = moveRight ? 1f : -1f;
+
+        Vector2 rayOrigin = new Vector2(
+            b.center.x + dir * (b.extents.x + edgeCheckForwardOffset),
+            b.min.y + edgeRayStartYOffset
+        );
+
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(rayOrigin, rayOrigin + Vector2.down * edgeCheckDownDistance);
+        Gizmos.DrawSphere(rayOrigin, 0.035f);
     }
 }

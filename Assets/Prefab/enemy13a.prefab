@@ -312,8 +312,11 @@ MonoBehaviour:
   animFps: 6
   moveSpeed: 1.5
   moveRight: 0
-  floatAmplitude: 0.25
+  floatAmplitude: 1
   floatFrequency: 1.2
+  usePatrolDistance: 1
+  patrolDistance: 5
+  turnPauseSeconds: 0.5
   firePoint: {fileID: 365061224482471641}
   bulletPrefab: {fileID: 4476094327054591651, guid: 172ca7c4458933147bde416c57728909, type: 3}
   shootInterval: 1.2
@@ -340,7 +343,19 @@ MonoBehaviour:
   isGrabbed: 0
   isFlying: 0
   hpBar: {fileID: 5014821732281426149}
-  deathEffectPrefab: {fileID: 3334866903324842887, guid: f763a4fede8bfbe45aa79c14c1b1d6eb, type: 3}
+  damageSprite: {fileID: 21300000, guid: 352703e358e9adf43985e1906942f0c8, type: 3}
+  damageSpriteSeconds: 1.2
+  deadSprite: {fileID: 21300000, guid: b49218d3d644ab94387b80013b52f1ea, type: 3}
+  deathSpriteSecondsBeforeDestroy: 1.2
+  disableAnimatorWhileSpecialSprite: 1
+  enableDamageKnockback: 1
+  damageKnockbackX: 0.3
+  damageKnockbackY: 0
+  damageKnockbackMoveSeconds: 0.08
+  stopVelocityAfterDamageKnockback: 1
+  invertDamageKnockbackDirection: 0
+  forceDamageKnockbackY: 0
+  deathEffectPrefab: {fileID: 0}
   deathEffectLife: 1.2
   enableItemDrop: 0
   dropPrefabs: []

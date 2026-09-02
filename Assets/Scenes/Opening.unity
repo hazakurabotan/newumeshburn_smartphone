@@ -218,6 +218,7 @@ RectTransform:
   m_Children:
   - {fileID: 421121882}
   - {fileID: 1730878324}
+  - {fileID: 1125986017}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -280,107 +281,112 @@ MonoBehaviour:
   lines:
   - text: "\u3053\u308C\u306F\u3075\u305F\u308A\u306E\u5C11\u5973\u304C\u4E16\u754C\u3092\u6551\u3046\u7269\u8A9E\u3002"
     background: {fileID: 21300000, guid: 4da6f86cfca9ac245a0033ebd29f6c58, type: 3}
-    dialogPanel: {fileID: 21300000, guid: b72550906963111489544e44cca0198b, type: 3}
+    dialogPanel: {fileID: 21300000, guid: a410229ba0c2fba4d91964eed784fd43, type: 3}
     voice: {fileID: 8300000, guid: 5379101f004ca68408cee1893f90e2a1, type: 3}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
   - text: "\u4E16\u754C\u306F\u30C7\u30B9\u30C8\u30ED\u30A4\u3046\u3081\u3057\u3070\u306E\u624B\u306B\u3088\u3063\u3066\u79E9\u5E8F\u304C\u3053\u308F\u3055\u308C\u3088\u3046\u3068\u3057\u3066\u3044\u308B"
     background: {fileID: 21300000, guid: 4da6f86cfca9ac245a0033ebd29f6c58, type: 3}
-    dialogPanel: {fileID: 21300000, guid: b72550906963111489544e44cca0198b, type: 3}
+    dialogPanel: {fileID: 21300000, guid: a410229ba0c2fba4d91964eed784fd43, type: 3}
     voice: {fileID: 8300000, guid: a74d0ba6180898048896a3b85df10779, type: 3}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
   - text: "\u3081\u3050\u308B\u305F\u3061\u306E\u4F4F\u3080\u8857\u3082\u4F8B\u5916\u3067\u306F\u306A\u304B\u3063\u305F"
     background: {fileID: 21300000, guid: 4da6f86cfca9ac245a0033ebd29f6c58, type: 3}
-    dialogPanel: {fileID: 21300000, guid: b72550906963111489544e44cca0198b, type: 3}
+    dialogPanel: {fileID: 21300000, guid: a410229ba0c2fba4d91964eed784fd43, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0
     autoAdvanceOnVoiceEnd: 0
   - text: "\u304A\u59C9\u3061\u3083\u3093\u304A\u304B\u3048\u308A\uFF01\u8857\u306E\u30D1\u30C8\u30ED\u30FC\u30EB\u304A\u3064\u304B\u308C\u3055\u307E"
     background: {fileID: 21300000, guid: 4da6f86cfca9ac245a0033ebd29f6c58, type: 3}
-    dialogPanel: {fileID: 21300000, guid: 29787b93a5f0c6341a05c13c4ad8c158, type: 3}
+    dialogPanel: {fileID: 21300000, guid: cf17819511f19bc4982685690f61a90e, type: 3}
     voice: {fileID: 8300000, guid: 7fbb51409ca29424bbd0d2c946e5dbde, type: 3}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
-  - text: "\u3081\u308B\u3050\u308B\u305F\u3060\u3044\u307E\uFF01\u3042\u308A\u304C\u3068\u3046\u306D\u3002\u7121\u4E8B\u306B\u304B\u3048\u3063\u3066\u304D\u305F\u3088"
+  - text: "\u3081\u3050\u308B\u305F\u3060\u3044\u307E\uFF01\u3042\u308A\u304C\u3068\u3046\u306D\u3002\u7121\u4E8B\u306B\u304B\u3048\u3063\u3066\u304D\u305F\u3088"
     background: {fileID: 21300000, guid: 4da6f86cfca9ac245a0033ebd29f6c58, type: 3}
-    dialogPanel: {fileID: 21300000, guid: 57c4daae84a84384aad813a58253b542, type: 3}
+    dialogPanel: {fileID: 21300000, guid: c74d586e3e7c7af40924d1afd7c0ec45, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0
     autoAdvanceOnVoiceEnd: 0
   - text: "\u304A\u7559\u5B88\u756A\u4E2D\u306B\u4F55\u304B\u304B\u308F\u3063\u305F\u4E8B\u306F\u306A\u304B\u3063\u305F\uFF1F\u3060\u3044\u3058\u3087\u3046\u3076\u3060\u3063\u305F\uFF1F"
     background: {fileID: 21300000, guid: 4da6f86cfca9ac245a0033ebd29f6c58, type: 3}
-    dialogPanel: {fileID: 21300000, guid: 57c4daae84a84384aad813a58253b542, type: 3}
+    dialogPanel: {fileID: 21300000, guid: c74d586e3e7c7af40924d1afd7c0ec45, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0
     autoAdvanceOnVoiceEnd: 0
-  - text: "\u3060\u3044\u3058\u3087\u3046\u3076\u3060\u3088\u3002\u306A\u306B\u3082\u306A\u304B\u3063\u305F\u3088\u3002\u305D\u308C\u3088\u308A\u304A\u59C9\u3061\u3083\u3093\u3053\u3053\u3092\u6559\u3048\u3066"
+  - text: "\u3060\u3044\u3058\u3087\u3046\u3076\u3060\u3088\u3002\u306A\u306B\u3082\u306A\u304B\u3063\u305F\u3088\u3002\u305D\u308C\u3088\u308A\u304A\u59C9\u3061\u3083\u3093\u3001\u3053\u3053\u3092\u6559\u3048\u3066"
     background: {fileID: 21300000, guid: 4da6f86cfca9ac245a0033ebd29f6c58, type: 3}
-    dialogPanel: {fileID: 21300000, guid: 29787b93a5f0c6341a05c13c4ad8c158, type: 3}
+    dialogPanel: {fileID: 21300000, guid: cf17819511f19bc4982685690f61a90e, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0
     autoAdvanceOnVoiceEnd: 0
   - text: "\u3044\u3044\u3088\u3002\u3069\u3053\u304C\u308F\u304B\u3089\u306A\u3044\u306E\uFF1F\u304A\u59C9\u3061\u3083\u3093\u304C\u6559\u3048\u3066\u3042\u3052\u308B"
     background: {fileID: 21300000, guid: 4da6f86cfca9ac245a0033ebd29f6c58, type: 3}
-    dialogPanel: {fileID: 21300000, guid: 57c4daae84a84384aad813a58253b542, type: 3}
+    dialogPanel: {fileID: 21300000, guid: c74d586e3e7c7af40924d1afd7c0ec45, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
   - text: "\u6B6F\u8ECA\u3064\u304F\u308B\u306F\u3001\u3044\u3082\u3046\u3068\u306E\u3081\u3050\u308B\u3068\u751F\u307E\u308C\u80B2\u3063\u305F\u8857\u3092\u5B88\u308B\u305F\u3081\u306B\u3001"
     background: {fileID: 21300000, guid: 3f6cb207597808645bf27431f1324cb5, type: 3}
-    dialogPanel: {fileID: 21300000, guid: b72550906963111489544e44cca0198b, type: 3}
+    dialogPanel: {fileID: 21300000, guid: a410229ba0c2fba4d91964eed784fd43, type: 3}
     voice: {fileID: 8300000, guid: b4ab151cb1a215441a3d9a3c14712e2b, type: 3}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
   - text: "\u81EA\u8EAB\u306E\u4F5C\u3063\u305F\u30A2\u30FC\u30E0\u30AE\u30A2\u3092\u305D\u3046\u3073\u3057\u3001\u8857\u306B\u305B\u307E\u308B\u3046\u3081\u3057\u3070\u306E\u306A\u304B\u307E\u3092\u3052\u304D\u305F\u3044\u3057\u305F\u3002"
     background: {fileID: 21300000, guid: 3f6cb207597808645bf27431f1324cb5, type: 3}
-    dialogPanel: {fileID: 21300000, guid: b72550906963111489544e44cca0198b, type: 3}
+    dialogPanel: {fileID: 21300000, guid: a410229ba0c2fba4d91964eed784fd43, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0
     autoAdvanceOnVoiceEnd: 0
   - text: "\u304A\u59C9\u3061\u3083\u3093\u3001\u3046\u3081\u3057\u3070\u306A\u3093\u3066\u65E9\u304F\u305F\u304A\u3057\u3066\u304D\u3066\u306D"
     background: {fileID: 21300000, guid: 3f6cb207597808645bf27431f1324cb5, type: 3}
-    dialogPanel: {fileID: 21300000, guid: b72550906963111489544e44cca0198b, type: 3}
+    dialogPanel: {fileID: 21300000, guid: a410229ba0c2fba4d91964eed784fd43, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
   - text: "\u306F\u3044\u3088\u3002\u307E\u304B\u305B\u3066\uFF01\u304A\u59C9\u3061\u3083\u3093\u304C\u305F\u304A\u3057\u3066\u304F\u308B\u3088\u3002\u3053\u306E\u8857\u306F\u3081\u3050\u308B\u306B\u307E\u304B\u305B\u305F\u3002\u624B\u7D19\u304B\u304F\u306D"
     background: {fileID: 21300000, guid: 3f6cb207597808645bf27431f1324cb5, type: 3}
-    dialogPanel: {fileID: 21300000, guid: 29787b93a5f0c6341a05c13c4ad8c158, type: 3}
+    dialogPanel: {fileID: 21300000, guid: cf17819511f19bc4982685690f61a90e, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
   - text: "\u59C9\u306E\u3064\u304F\u308B\u304C\u305F\u3073\u306B\u3067\u3066\u3001\u3057\u3070\u3089\u304F\u3057\u3066\u624B\u7D19\u304C\u3068\u3069\u304B\u306A\u304F\u306A\u3063\u305F"
     background: {fileID: 21300000, guid: 48fce4eb3b9fdee4a928ca0a99dab9fd, type: 3}
-    dialogPanel: {fileID: 21300000, guid: b72550906963111489544e44cca0198b, type: 3}
+    dialogPanel: {fileID: 21300000, guid: a410229ba0c2fba4d91964eed784fd43, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
   - text: "\u59C9\u304B\u3089\u3055\u3044\u3054\u306E\u3066\u304C\u307F\u306F\u3001\u30C7\u30B9\u30C8\u30ED\u30A4\u3046\u3081\u3057\u3070\u306E\u3057\u308D\u306B\u3064\u3044\u305F\u3068\u3044\u3046\u306A\u3044\u3088\u3046\u3060\u3063\u305F"
     background: {fileID: 21300000, guid: 48fce4eb3b9fdee4a928ca0a99dab9fd, type: 3}
-    dialogPanel: {fileID: 21300000, guid: b72550906963111489544e44cca0198b, type: 3}
+    dialogPanel: {fileID: 21300000, guid: a410229ba0c2fba4d91964eed784fd43, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
   - text: "\u304A\u59C9\u3061\u3083\u3093\u3001\u5927\u4E08\u592B\u304B\u306A\uFF1F\u3082\u3046\u3042\u308C\u304B\u3089\u5168\u7136\u624B\u7D19\u304C\u6765\u3066\u3044\u306A\u3044\u3002"
     background: {fileID: 21300000, guid: 48fce4eb3b9fdee4a928ca0a99dab9fd, type: 3}
-    dialogPanel: {fileID: 21300000, guid: 29787b93a5f0c6341a05c13c4ad8c158, type: 3}
+    dialogPanel: {fileID: 21300000, guid: cf17819511f19bc4982685690f61a90e, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
   - text: "\u304A\u59C9\u3061\u3083\u3093\u306B\u4F55\u304B\u304C\u3042\u3063\u305F\u306E\u304B\u3082\u3057\u308C\u306A\u3044\u3002\u304A\u59C9\u3061\u3083\u3093\u3092\u307E\u3063\u3066\u3066\uFF01"
     background: {fileID: 21300000, guid: 48fce4eb3b9fdee4a928ca0a99dab9fd, type: 3}
-    dialogPanel: {fileID: 21300000, guid: 29787b93a5f0c6341a05c13c4ad8c158, type: 3}
+    dialogPanel: {fileID: 21300000, guid: cf17819511f19bc4982685690f61a90e, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
   - text: "\u3053\u3046\u3057\u3066\u3001\u3081\u3050\u308B\u306F\u59C9\u3092\u3055\u304C\u3059\u305F\u3073\u306B\u3067\u308B\u3053\u3068\u306B\u306A\u3063\u305F\u3002"
     background: {fileID: 21300000, guid: 48fce4eb3b9fdee4a928ca0a99dab9fd, type: 3}
-    dialogPanel: {fileID: 21300000, guid: b72550906963111489544e44cca0198b, type: 3}
+    dialogPanel: {fileID: 21300000, guid: a410229ba0c2fba4d91964eed784fd43, type: 3}
     voice: {fileID: 0}
     voiceVolume: 0.5
     autoAdvanceOnVoiceEnd: 0
   nextSceneName: StageSelect
+  enableSouthButtonNext: 1
+  enableSouthButtonHoldSkip: 1
+  southHoldSkipSeconds: 2
+  enableSpaceKeyNext: 1
+  debugLog: 1
 --- !u!1 &519407443
 GameObject:
   m_ObjectHideFlags: 0
@@ -432,14 +438,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.6156863}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 29787b93a5f0c6341a05c13c4ad8c158, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -456,6 +462,140 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519407443}
+  m_CullTransparentMesh: 1
+--- !u!1 &1125986016
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1125986017}
+  - component: {fileID: 1125986019}
+  - component: {fileID: 1125986018}
+  m_Layer: 5
+  m_Name: Text (TMP)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1125986017
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1125986016}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 200375312}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -528, y: 8}
+  m_SizeDelta: {x: 200, y: 50}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1125986018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1125986016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: "A\u30DC\u30BF\u30F3\u9577\u62BC\u3057\u3067\u30B9\u30AD\u30C3\u30D7"
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 6056bba112765b242a1f3963e701c3ad, type: 2}
+  m_sharedMaterial: {fileID: 4225388342445699587, guid: 6056bba112765b242a1f3963e701c3ad, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4278190244
+  m_fontColor: {r: 0.6415094, g: 0, b: 0, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 45
+  m_fontSizeBase: 45
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 1
+  m_VerticalAlignment: 256
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_enableWordWrapping: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: -77.78118, w: -84.08783}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &1125986019
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1125986016}
   m_CullTransparentMesh: 1
 --- !u!1 &1242507501
 GameObject:
@@ -491,7 +631,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.51, y: 0}
+  m_AnchoredPosition: {x: -0.51, y: 1.43}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1242507503
@@ -523,8 +663,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4282451982
+  m_fontColor: {r: 0.053232018, g: 0.030037377, b: 0.254717, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -541,8 +681,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 17
-  m_fontSizeBase: 17
+  m_fontSize: 20
+  m_fontSizeBase: 20
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -577,7 +717,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: -5.8068237, z: -92.6784, w: -36.131474}
+  m_margin: {x: -0.000030493233, y: -5.8068237, z: -92.6784, w: -73.66172}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0

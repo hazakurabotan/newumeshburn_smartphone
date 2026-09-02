@@ -275,14 +275,19 @@ MonoBehaviour:
   groundCheck: {fileID: 0}
   groundLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   moveSpeed: 3.5
-  moveRight: 0
+  moveRight: 1
   wallCheck: {fileID: 0}
   wallCheckRadius: 0.08
   wallLayer:
     serializedVersion: 2
     m_Bits: 128
+  turnAtLedge: 1
+  edgeCheckForwardOffset: 0.08
+  edgeCheckDownDistance: 0.45
+  edgeRayStartYOffset: 0.12
+  autoUseGroundLayerIfEmpty: 1
   walkSprites:
   - {fileID: 21300000, guid: 52b4146f99cdf32469b39eca3df6a868, type: 3}
   - {fileID: 21300000, guid: 680d72c7bc94b1d4fb27b052908cc039, type: 3}
@@ -345,7 +350,19 @@ MonoBehaviour:
   isGrabbed: 0
   isFlying: 0
   hpBar: {fileID: 5366929349647222813}
-  deathEffectPrefab: {fileID: 3334866903324842887, guid: f763a4fede8bfbe45aa79c14c1b1d6eb, type: 3}
+  damageSprite: {fileID: 21300000, guid: 6d7b19a89b3049848962e052742a9163, type: 3}
+  damageSpriteSeconds: 1.2
+  deadSprite: {fileID: 21300000, guid: 8266e68eeec675b4285799799fc23b52, type: 3}
+  deathSpriteSecondsBeforeDestroy: 1.2
+  disableAnimatorWhileSpecialSprite: 1
+  enableDamageKnockback: 1
+  damageKnockbackX: 0.3
+  damageKnockbackY: 0
+  damageKnockbackMoveSeconds: 0.08
+  stopVelocityAfterDamageKnockback: 1
+  invertDamageKnockbackDirection: 0
+  forceDamageKnockbackY: 0
+  deathEffectPrefab: {fileID: 0}
   deathEffectLife: 1.2
   enableItemDrop: 0
   dropPrefabs: []

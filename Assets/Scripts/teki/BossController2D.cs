@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +13,7 @@ public class BossController2D : MonoBehaviour
     public Transform muzzle;
     public GameObject bossBulletPrefab;
 
-    [Header("Targets (2人対応)")]
+    [Header("Targets 2人対応")]
     public Transform secondTarget;
     public string secondTargetName = "mawaru13";
     public bool preferNearestTarget = true;
@@ -24,8 +25,27 @@ public class BossController2D : MonoBehaviour
     [Header("HP")]
     public int maxHP = 20;
     public int currentHP = 20;
-    public string conversationSceneName = "";
+
+    [Tooltip("撃破後、最終的に移動するシーン名。今回は ImpactRunScene")]
+    public string conversationSceneName = "ImpactRunScene";
+
     bool conversationTriggered = false;
+
+    [Header("Defeat Dialogue")]
+    [Tooltip("HP0時に再生する会話。BossDefeatTalkなどに付けた BossIntroDialogueCutscene を入れる")]
+    public BossIntroDialogueCutscene defeatDialogue;
+
+    [Tooltip("撃破後会話が設定されていない場合、すぐ conversationSceneName に移動する")]
+    public bool loadSceneDirectlyIfNoDefeatDialogue = true;
+
+    [Tooltip("撃破後、会話開始までの待ち時間")]
+    public float defeatDialogueStartDelay = 0.15f;
+
+    [Tooltip("会話終了後、シーン移動までの待ち時間")]
+    public float sceneLoadDelayAfterDefeatDialogue = 0.15f;
+
+    [Tooltip("撃破後にボスのColliderをOFFにして追加ヒットを防ぐ")]
+    public bool disableBossColliderOnDefeat = true;
 
     [Header("Move / Jump")]
     public float runSpeed = 6f;
@@ -42,7 +62,6 @@ public class BossController2D : MonoBehaviour
     public float thinkInterval = 0.35f;
     public float patternPause = 0.2f;
 
-    // ==== 導入会話 ====
     [Header("Intro Dialogue")]
     public bool playIntroOnFirstApproach = true;
     public DialogueLine[] introLines;
@@ -57,6 +76,7 @@ public class BossController2D : MonoBehaviour
     Animator anim;
 
     float CharUnit => Mathf.Max(col.bounds.size.x, col.bounds.size.y);
+
     bool IsGrounded => groundCheck
         ? Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundMask)
         : false;
@@ -66,9 +86,12 @@ public class BossController2D : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         col = GetComponent<Collider2D>();
         anim = GetComponent<Animator>();
+
         currentHP = Mathf.Clamp(currentHP, 0, maxHP);
 
-        if (!player) player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        if (!player)
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
         if (!secondTarget && !string.IsNullOrEmpty(secondTargetName))
         {
             var go = GameObject.Find(secondTargetName);
@@ -121,9 +144,11 @@ public class BossController2D : MonoBehaviour
             }
 
             var step = cycle[idx];
+
             for (int i = 0; i < step.count; i++)
             {
                 yield return new WaitForSeconds(thinkInterval);
+
                 if (!IsAnyTargetInRange())
                 {
                     rb.velocity = Vector2.zero;
@@ -132,20 +157,35 @@ public class BossController2D : MonoBehaviour
                 }
 
                 int pick;
+
                 if (step.type < 0)
                 {
                     var candidates = new List<int>() { 0, 1, 2 };
-                    if (lastRandom >= 0) candidates.Remove(lastRandom);
-                    pick = candidates[Random.Range(0, candidates.Count)];
+
+                    if (lastRandom >= 0)
+                        candidates.Remove(lastRandom);
+
+                    pick = candidates[UnityEngine.Random.Range(0, candidates.Count)];
                     lastRandom = pick;
                 }
-                else pick = step.type;
+                else
+                {
+                    pick = step.type;
+                }
 
                 switch (pick)
                 {
-                    case 0: yield return Pattern1_ChargeThenHop(); break;
-                    case 1: yield return Pattern2_HighJump(); break;
-                    case 2: yield return Pattern3_StopAndShoot(); break;
+                    case 0:
+                        yield return Pattern1_ChargeThenHop();
+                        break;
+
+                    case 1:
+                        yield return Pattern2_HighJump();
+                        break;
+
+                    case 2:
+                        yield return Pattern3_StopAndShoot();
+                        break;
                 }
 
                 yield return new WaitForSeconds(patternPause);
@@ -158,7 +198,9 @@ public class BossController2D : MonoBehaviour
     IEnumerator WaitUntilTargetInRange()
     {
         rb.velocity = Vector2.zero;
+
         if (anim) anim.SetTrigger("Idle");
+
         while (!IsAnyTargetInRange())
         {
             rb.velocity = Vector2.zero;
@@ -170,6 +212,7 @@ public class BossController2D : MonoBehaviour
     {
         var t = GetBestTarget();
         if (!t) return false;
+
         float r2 = activationRange * activationRange;
         return (t.position - transform.position).sqrMagnitude <= r2;
     }
@@ -178,21 +221,28 @@ public class BossController2D : MonoBehaviour
     {
         Transform a = player;
         Transform b = secondTarget;
-        if (a == null && b == null) return null;
-        if (!preferNearestTarget) return a != null ? a : b;
+
+        if (a == null && b == null)
+            return null;
+
+        if (!preferNearestTarget)
+            return a != null ? a : b;
 
         if (a != null && b != null)
         {
             float da = (a.position - transform.position).sqrMagnitude;
             float db = (b.position - transform.position).sqrMagnitude;
-            return (da <= db) ? a : b;
+
+            return da <= db ? a : b;
         }
+
         return a != null ? a : b;
     }
 
     IEnumerator PlayIntroDialogue()
     {
         rb.velocity = Vector2.zero;
+
         if (anim) anim.SetTrigger("Idle");
 
         if (freezePlayersDuringIntro)
@@ -206,6 +256,7 @@ public class BossController2D : MonoBehaviour
         }
 
         bool finished = false;
+
         var seq = DialogSequenceManager.Instance ?? FindObjectOfType<DialogSequenceManager>(true);
         if (seq != null)
         {
@@ -214,7 +265,8 @@ public class BossController2D : MonoBehaviour
         }
         else
         {
-            foreach (var _ in introLines) yield return new WaitForSeconds(1.2f);
+            foreach (var _ in introLines)
+                yield return new WaitForSeconds(1.2f);
         }
 
         if (freezePlayersDuringIntro)
@@ -228,7 +280,6 @@ public class BossController2D : MonoBehaviour
         }
     }
 
-    // ===== パターン =====
     IEnumerator Pattern1_ChargeThenHop()
     {
         FaceToTarget();
@@ -239,21 +290,27 @@ public class BossController2D : MonoBehaviour
         Vector2 last = rb.position;
 
         if (anim) anim.SetTrigger("Run");
+
         while (moved < targetDist)
         {
             rb.velocity = new Vector2(dir * runSpeed, rb.velocity.y);
             yield return null;
+
             moved += Vector2.Distance(rb.position, last);
             last = rb.position;
         }
 
         rb.velocity = new Vector2(0, rb.velocity.y);
-        Flip(); dir = FacingDir();
+
+        Flip();
+        dir = FacingDir();
 
         if (IsGrounded)
         {
             if (anim) anim.SetTrigger("Jump");
+
             rb.velocity = new Vector2(dir * runSpeed * 0.9f, rb.velocity.y);
+
             rb.AddForce(
                 new Vector2(dir * jumpForwardForce, JumpVelocityForHeight(1.0f * CharUnit)),
                 ForceMode2D.Impulse
@@ -263,42 +320,49 @@ public class BossController2D : MonoBehaviour
         float hopTarget = 3f * CharUnit;
         float hopMoved = 0f;
         last = rb.position;
+
         while (hopMoved < hopTarget)
         {
             yield return null;
+
             hopMoved += Vector2.Distance(rb.position, last);
             last = rb.position;
         }
+
         rb.velocity = new Vector2(0, rb.velocity.y);
     }
 
     IEnumerator Pattern2_HighJump()
     {
         if (!IsGrounded) yield break;
+
         if (anim) anim.SetTrigger("Jump");
 
         float height = 3f * CharUnit;
         float vy = JumpVelocityForHeight(height);
+
         rb.velocity = new Vector2(0, vy);
 
-        // 上昇→下降→着地
         yield return new WaitUntil(() => rb.velocity.y <= 0f);
         yield return new WaitUntil(() => IsGrounded);
     }
 
     IEnumerator Pattern3_StopAndShoot()
     {
-        // ちょい間を置いてから射撃
         rb.velocity = new Vector2(0, rb.velocity.y);
+
         if (anim) anim.SetTrigger("Idle");
+
         yield return new WaitForSeconds(afterShootFreeze);
 
         FaceToTarget();
+
         var target = GetBestTarget();
 
         if (bossBulletPrefab && muzzle)
         {
             var b = Instantiate(bossBulletPrefab, muzzle.position, Quaternion.identity);
+
             Vector2 dir = target
                 ? ((Vector2)(target.position - muzzle.position)).normalized
                 : (FacingDir() >= 0 ? Vector2.right : Vector2.left);
@@ -307,94 +371,172 @@ public class BossController2D : MonoBehaviour
             if (rb2) rb2.velocity = dir * shotSpeed;
 
             var dd = b.GetComponent<DamageDealer>();
-            if (dd) dd.owner = gameObject; // 友軍誤判定を避けたいときに役立つ
+            if (dd) dd.owner = gameObject;
 
             var bCol = b.GetComponent<Collider2D>();
             var myCol = GetComponent<Collider2D>();
-            if (bCol && myCol) Physics2D.IgnoreCollision(bCol, myCol, true);
+
+            if (bCol && myCol)
+                Physics2D.IgnoreCollision(bCol, myCol, true);
         }
 
         rb.velocity = new Vector2(FacingDir() * runSpeed * 0.2f, rb.velocity.y);
+
         if (anim) anim.SetTrigger("Special");
+
         yield return new WaitForSeconds(0.1f);
     }
 
-
-    // ===== Damage =====
     public void ApplyDamage(int dmg)
     {
+        if (conversationTriggered) return;
         if (dmg <= 0) return;
 
         currentHP = Mathf.Max(0, currentHP - dmg);
+
         if (anim) anim.SetTrigger("Hurt");
 
-        // HPバー更新（対応するSetHp呼び出しを吸収）
         var hpBar = FindObjectOfType<BossHpBarController>();
         if (hpBar) hpBar.SetHp(currentHP);
 
-        // HPが0の時だけ会話シーン遷移
         if (currentHP <= 0 && !conversationTriggered)
         {
             conversationTriggered = true;
+
             StopAllCoroutines();
+
             rb.velocity = Vector2.zero;
-            StartCoroutine(GoConversationScene());
+            rb.angularVelocity = 0f;
+
+            StartCoroutine(DefeatFlow());
         }
     }
 
-    IEnumerator GoConversationScene()
+    IEnumerator DefeatFlow()
     {
         rb.velocity = Vector2.zero;
-        if (string.IsNullOrEmpty(conversationSceneName))
-            yield break;
+        rb.angularVelocity = 0f;
 
-        // BuildSettingsに登録されているか確認
-        bool sceneExists = false;
-        for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
+        if (anim) anim.SetTrigger("Idle");
+
+        if (disableBossColliderOnDefeat && col)
+            col.enabled = false;
+
+        yield return new WaitForSecondsRealtime(defeatDialogueStartDelay);
+
+        string nextSceneName = conversationSceneName;
+
+        if (defeatDialogue != null)
         {
-            string path = SceneUtility.GetScenePathByBuildIndex(i);
-            if (Path.GetFileNameWithoutExtension(path) == conversationSceneName)
-            {
-                sceneExists = true; break;
-            }
-        }
+            bool finished = false;
 
-        if (sceneExists)
-        {
-            Debug.Log("[Boss] Attempting to load scene: " + conversationSceneName);
+            Action onFinished = () => finished = true;
+            defeatDialogue.CutsceneFinished += onFinished;
 
-            yield return new WaitForSeconds(0.4f);
-            SceneManager.LoadScene(conversationSceneName);
+            defeatDialogue.StartCutsceneFrom(GetDefeatDialogueStarter());
+
+            yield return new WaitUntil(() => finished);
+
+            defeatDialogue.CutsceneFinished -= onFinished;
+
+            yield return new WaitForSecondsRealtime(sceneLoadDelayAfterDefeatDialogue);
+
+            yield return LoadSceneIfExists(nextSceneName);
         }
         else
         {
-            Debug.LogWarning($"[Boss] Scene '{conversationSceneName}' not found in Build Settings.");
+            if (loadSceneDirectlyIfNoDefeatDialogue)
+            {
+                yield return LoadSceneIfExists(nextSceneName);
+            }
+            else
+            {
+                Debug.LogWarning("[Boss] defeatDialogue が設定されていないため、撃破後会話を再生できません。");
+            }
         }
     }
 
-    // ===== Hit =====
+    BossIntroDialogueCutscene.Starter GetDefeatDialogueStarter()
+    {
+        Transform best = GetBestTarget();
+
+        if (best != null)
+        {
+            if (best.GetComponentInParent<MawaruController>() != null)
+                return BossIntroDialogueCutscene.Starter.Mawaru;
+
+            if (best.GetComponentInParent<PlayerController>() != null)
+                return BossIntroDialogueCutscene.Starter.Player;
+        }
+
+        if (secondTarget != null && secondTarget.gameObject.activeInHierarchy)
+            return BossIntroDialogueCutscene.Starter.Mawaru;
+
+        return BossIntroDialogueCutscene.Starter.Player;
+    }
+
+    IEnumerator LoadSceneIfExists(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName))
+        {
+            Debug.LogWarning("[Boss] 移動先シーン名が空です。conversationSceneName に ImpactRunScene を入れてください。");
+            yield break;
+        }
+
+        bool sceneExists = false;
+
+        for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
+        {
+            string path = SceneUtility.GetScenePathByBuildIndex(i);
+
+            if (Path.GetFileNameWithoutExtension(path) == sceneName)
+            {
+                sceneExists = true;
+                break;
+            }
+        }
+
+        if (!sceneExists)
+        {
+            Debug.LogWarning("[Boss] Scene '" + sceneName + "' がBuild Settingsに登録されていません。");
+            yield break;
+        }
+
+        Debug.Log("[Boss] Load scene: " + sceneName);
+        SceneManager.LoadScene(sceneName);
+    }
+
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (conversationTriggered) return;
+
         var dd = other.GetComponent<DamageDealer>();
         if (dd) ApplyDamage(dd.damage);
     }
 
     void OnCollisionEnter2D(Collision2D other)
     {
+        if (conversationTriggered) return;
+
         var dd = other.collider.GetComponent<DamageDealer>();
         if (dd) ApplyDamage(dd.damage);
     }
 
-    // ===== Facing =====
     void FaceToTarget()
     {
         var t = GetBestTarget();
         if (!t) return;
+
         int want = (t.position.x - transform.position.x) >= 0f ? 1 : -1;
-        if (want != face) Flip();
+
+        if (want != face)
+            Flip();
     }
 
-    int FacingDir() => face;
+    int FacingDir()
+    {
+        return face;
+    }
 
     void Flip()
     {
@@ -405,8 +547,10 @@ public class BossController2D : MonoBehaviour
     void ApplyVisualFacing()
     {
         var s = transform.localScale;
+
         float baseSign = spriteFacesRight ? 1f : -1f;
         s.x = Mathf.Abs(s.x) * baseSign * face;
+
         transform.localScale = s;
     }
 
@@ -419,6 +563,7 @@ public class BossController2D : MonoBehaviour
     void OnDrawGizmosSelected()
     {
         if (!showActivationGizmo) return;
+
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, activationRange);
 

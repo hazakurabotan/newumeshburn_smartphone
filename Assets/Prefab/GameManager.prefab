@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 5720793800331154350}
   - component: {fileID: 3106449630309393208}
   - component: {fileID: 758998506309439554}
+  - component: {fileID: 5970943141878137248}
+  - component: {fileID: 8156761314095690082}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -92,20 +94,195 @@ MonoBehaviour:
     displayName: "\u30EC\u30C3\u30C9\u30BD\u30FC\u30C0"
     description: "\u771F\u3063\u8D64\u306A\u5B9A\u756A\u30BD\u30FC\u30C0\u3002\u52E2\u3044\u306E\u3042\u308B\u5473\u308F\u3044\u3002"
     icon: {fileID: 21300000, guid: b9a45babdf3039546bd8348c1269ac01, type: 3}
+    canAppearFromVendingMachine: 1
+    canUseAsMixIngredient: 1
+    canDrinkDirectly: 1
   - id: blue
     displayName: "\u30B9\u30BF\u30FC\u30BD\u30FC\u30C0"
     description: "\u304D\u3089\u3081\u304F\u9752\u3044\u30B9\u30BF\u30FC\u30BD\u30FC\u30C0\u3002\u30AF\u30FC\u30EB\u306A\u70AD\u9178\u3002"
     icon: {fileID: 21300000, guid: 437354cefe52f8c44ae1448075672d7b, type: 3}
+    canAppearFromVendingMachine: 1
+    canUseAsMixIngredient: 1
+    canDrinkDirectly: 1
   - id: green
     displayName: "\u30E9\u30A4\u30E0\u30BD\u30FC\u30C0"
     description: "\u3055\u308F\u3084\u304B\u306A\u30E9\u30A4\u30E0\u306E\u30BD\u30FC\u30C0\u3002\u8EFD\u3084\u304B\u306A\u523A\u6FC0\u3002"
     icon: {fileID: 21300000, guid: cdf94f4ee07a71b47aad1d7bdd542925, type: 3}
+    canAppearFromVendingMachine: 1
+    canUseAsMixIngredient: 1
+    canDrinkDirectly: 1
   - id: orange
     displayName: "\u30AA\u30EC\u30F3\u30B8\u30BD\u30FC\u30C0"
     description: "\u30AA\u30EC\u30F3\u30B8\u306E\u98A8\u5473\u304C\u5E83\u304C\u308B\u30B8\u30E5\u30FC\u30B7\u30FC\u30BD\u30FC\u30C0\u3002"
     icon: {fileID: 21300000, guid: 3c599726fb4a4d84bb0e4cfddffcff13, type: 3}
+    canAppearFromVendingMachine: 1
+    canUseAsMixIngredient: 1
+    canDrinkDirectly: 1
   - id: purple
     displayName: "\u30B0\u30EC\u30FC\u30D7\u30BD\u30FC\u30C0"
     description: "\u3076\u3069\u3046\u306E\u7518\u307F\u3092\u611F\u3058\u308B\u6FC3\u3044\u3081\u306E\u30BD\u30FC\u30C0\u3002"
     icon: {fileID: 21300000, guid: 45ee2ea053629044abf34c28e29213dc, type: 3}
+    canAppearFromVendingMachine: 1
+    canUseAsMixIngredient: 1
+    canDrinkDirectly: 1
+  - id: mix_red_red
+    displayName: "\u30EC\u30C3\u30C9\u30EC\u30C3\u30C9\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: d95cb49cdd9a26241ba8895b2b6bf10e, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_red_blue
+    displayName: "\u30A2\u30C3\u30D7\u30EB\u30B5\u30A4\u30C0\u30FC"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: 568c0b31fdf3fc743a9beeaf59e6b485, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_red_green
+    displayName: "\u30EC\u30C3\u30C9\u30E9\u30A4\u30E0\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: 9c637b96d5bc6244a98ad05ad098ee15, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_red_orange
+    displayName: "\u30EC\u30C3\u30C9\u30AA\u30EC\u30F3\u30B8\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: ecfa9194ae92c3e4ea0f22304d191879, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_red_purple
+    displayName: "\u30EC\u30C3\u30C9\u30B0\u30EC\u30FC\u30D7\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: 947c7c947a08a76448105906ca0589f2, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_blue_blue
+    displayName: "\u30D6\u30EB\u30FC\u30D6\u30EB\u30FC\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: c904ef0a30cd65b4d9300ff319ccb9ec, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_blue_green
+    displayName: "\u30D6\u30EB\u30FC\u30E9\u30A4\u30E0\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: e5c6da8b4a2c52d4a9f11568a2aea575, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_blue_orange
+    displayName: "\u30D6\u30EB\u30FC\u30AA\u30EC\u30F3\u30B8\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: afe874ed9c791a748be8c5e4839a6067, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_blue_purple
+    displayName: "\u30D6\u30EB\u30FC\u30B0\u30EC\u30FC\u30D7\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: 7f547f6829a785a4ba88b0b5c260bcb2, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_green_green
+    displayName: "\u30E9\u30A4\u30E0\u30E9\u30A4\u30E0\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: 381d8e11b580acb4081dfb0fa06ceec1, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_green_orange
+    displayName: "\u30E9\u30A4\u30E0\u30AA\u30EC\u30F3\u30B8\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: cc9f5f908cc06564aa564eed555a7892, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_green_purple
+    displayName: "\u30E9\u30A4\u30E0\u30B0\u30EC\u30FC\u30D7\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: 0a71b06b4da0f994082bbdbb3a896afe, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_orange_orange
+    displayName: "\u30AA\u30EC\u30F3\u30B8\u30AA\u30EC\u30F3\u30B8\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: 23b65cf48c88252499ca68739cb6b604, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_orange_purple
+    displayName: "\u30AA\u30EC\u30F3\u30B8\u30B0\u30EC\u30FC\u30D7\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: 6f9616ab23410734e993e20aa9cf4bd0, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
+  - id: mix_purple_purple
+    displayName: "\u30B0\u30EC\u30FC\u30D7\u30B0\u30EC\u30FC\u30D7\u30DF\u30C3\u30AF\u30B9"
+    description: "\u30DF\u30C3\u30AF\u30B9\u3057\u3066\u5B8C\u6210\u3057\u305F\u7F36\u30B8\u30E5\u30FC\u30B9\u3002"
+    icon: {fileID: 21300000, guid: 3c01ec90ca18c254c863255cc180c8b9, type: 3}
+    canAppearFromVendingMachine: 0
+    canUseAsMixIngredient: 0
+    canDrinkDirectly: 1
   ownedJuiceIndices: 
+--- !u!114 &5970943141878137248
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6010233510560881080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbc43dd7d437c324296f07ede2adcef4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  juiceInventory: {fileID: 758998506309439554}
+  baseJuiceHealAmount: 20
+  unlockEntries:
+  - juiceId: red
+    unlockDisplayName: "\u30C0\u30C3\u30B7\u30E5"
+    unlockType: 0
+    healAmount: 20
+  - juiceId: blue
+    unlockDisplayName: "\u4E0A\u30D1\u30F3\u30C1"
+    unlockType: 1
+    healAmount: 20
+  - juiceId: green
+    unlockDisplayName: "\u30B9\u30E9\u30A4\u30C9"
+    unlockType: 2
+    healAmount: 20
+  - juiceId: orange
+    unlockDisplayName: "\u4E8C\u6BB5\u30B8\u30E3\u30F3\u30D7"
+    unlockType: 3
+    healAmount: 20
+  - juiceId: purple
+    unlockDisplayName: "\u30ED\u30B1\u30C3\u30C8\u30D1\u30F3\u30C1"
+    unlockType: 4
+    healAmount: 20
+  usedJuiceIds: []
+  saveUnlocksToPlayerPrefs: 1
+  saveKey: GirlsGear_UsedJuices
+--- !u!114 &8156761314095690082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6010233510560881080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f2d96a039572fc4cbac39b858e8c6c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  juiceInventory: {fileID: 758998506309439554}
+  loadOnStart: 1
+  saveOnInventoryChanged: 1
+  saveKey: GirlsGear_OwnedJuices
+  savedPreview: 

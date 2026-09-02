@@ -12,7 +12,7 @@ public class BossIntroDialogueCutscene : MonoBehaviour
         public string speakerName;
         public Sprite portrait;
 
-        [Header("Voice (optional)")]
+        [Header("Voice optional")]
         public AudioClip voice;
         [Range(0f, 1f)] public float voiceVolume = 1f;
 
@@ -21,27 +21,24 @@ public class BossIntroDialogueCutscene : MonoBehaviour
 
     public enum Starter
     {
-        AutoByTrigger, // トリガーに入ったキャラで自動
+        AutoByTrigger,
         Player,
         Mawaru
     }
 
     [Header("Trigger")]
-    [Tooltip("一度だけ再生したいならON")]
     public bool playOnce = true;
+
+    [Tooltip("ONならTriggerに入った時に自動で会話開始。撃破後会話用に使う場合はOFFにする")]
+    public bool allowTriggerStart = true;
+
     bool played = false;
 
     [Header("Which dialogue to use")]
-    [Tooltip("基本は AutoByTrigger 推奨")]
     public Starter starter = Starter.AutoByTrigger;
 
-    [Tooltip("従来の共通会話（どちらでも同じでいい時）")]
     public Line[] linesDefault;
-
-    [Tooltip("プレイヤー（めぐる等）を選んだ時の会話")]
     public Line[] linesForPlayer;
-
-    [Tooltip("mawaru13 を選んだ時の会話")]
     public Line[] linesForMawaru;
 
     [Header("UI References")]
@@ -50,53 +47,44 @@ public class BossIntroDialogueCutscene : MonoBehaviour
     public TextMeshProUGUI nameText;
     public TextMeshProUGUI dialogueText;
 
-    [Header("Boss UI (show after intro)")]
+    [Header("Boss UI")]
     public GameObject bossPanel;
 
-    [Header("Audio (optional)")]
-    [Tooltip("セリフ音声を鳴らすAudioSource（UI側でもOK）")]
+    [Tooltip("会話開始時にBossPanelを隠す")]
+    public bool hideBossPanelWhenCutsceneStarts = true;
+
+    [Tooltip("会話終了時にBossPanelを表示する。撃破後会話ではOFF推奨")]
+    public bool showBossPanelWhenCutsceneEnds = true;
+
+    [Header("Audio optional")]
     public AudioSource voiceSource;
-
-    [Tooltip("会話開始時に切り替えるBGM（未設定ならBGM変更しない）")]
     public AudioClip dialogueBgm;
-
-    [Tooltip("BGMを鳴らしているAudioSource（BGMPlayerなど）")]
     public AudioSource bgmSource;
 
     [Header("BGM Behavior")]
-    [Tooltip("ON: 会話で切り替えたBGMを、会話終了後もそのまま流し続ける（あなたの希望）")]
     public bool keepDialogueBgmAfterCutscene = true;
-
-    [Tooltip("ON: 会話開始時にBGMを dialogueBgm に切り替える（dialogueBgm がある時だけ）")]
     public bool switchBgmOnStart = true;
 
     [Header("Audio Safety")]
-    [Tooltip("voiceSource が未設定なら自動でこのオブジェクトから拾う/追加する")]
     public bool autoCreateVoiceSourceIfMissing = true;
-
-    [Tooltip("会話中だけ voiceSource を 2D(SpatialBlend=0) に固定する")]
     public bool forceVoice2D = true;
-
-    [Tooltip("会話中だけ bgmSource を 2D(SpatialBlend=0) に固定する")]
     public bool forceBgm2D = true;
 
-    [Header("Input Source (any PlayerInput in scene)")]
-    [Tooltip("ここは『どれでもOK』。このスクリプトは PlayerInput を Switchしません。ActionMap を手動で Enable/Disable します。")]
+    [Header("Input Source")]
     public PlayerInput inputSource;
 
     [Header("Action Map / Advance Action")]
-    [Tooltip("会話用ActionMap名。あなたの project では Dialog を推奨。")]
     public string dialogActionMapName = "Dialog";
-    [Tooltip("会話を進めるAction名。例：Next / Submit / South など")]
     public string advanceActionName = "Next";
-    [Tooltip("advanceActionName が見つからない時の保険")]
     public string fallbackAdvanceName = "Submit";
 
-    [Header("Lock Targets (disable these scripts during dialogue)")]
+    [Header("Lock Targets")]
     public MonoBehaviour[] lockBehaviours;
 
-    [Header("Freeze Bodies (stay still)")]
+    [Header("Freeze Bodies")]
     public Rigidbody2D[] freezeBodies;
+
+    public event Action CutsceneFinished;
 
     int index = 0;
     bool running = false;
@@ -104,11 +92,9 @@ public class BossIntroDialogueCutscene : MonoBehaviour
     Line[] activeLines;
     InputAction advanceAction = null;
 
-    // ActionMap restore
     UnityEngine.InputSystem.Utilities.ReadOnlyArray<InputActionMap> maps;
     bool[] mapWasEnabled;
 
-    // BGM restore（keep=false の時だけ使う）
     AudioClip prevBgmClip;
     float prevBgmTime;
     bool prevBgmLoop;
@@ -120,9 +106,13 @@ public class BossIntroDialogueCutscene : MonoBehaviour
         public float gravity;
         public bool simulated;
     }
+
     BodyBackup[] bodyBackups;
 
     Starter startedBy = Starter.AutoByTrigger;
+
+    public bool IsRunning => running;
+    public bool HasPlayed => played;
 
     void Reset()
     {
@@ -133,7 +123,9 @@ public class BossIntroDialogueCutscene : MonoBehaviour
     void Awake()
     {
         if (dialogueRoot) dialogueRoot.SetActive(false);
-        if (bossPanel) bossPanel.SetActive(false);
+
+        if (bossPanel && hideBossPanelWhenCutsceneStarts)
+            bossPanel.SetActive(false);
 
         if (!bgmSource)
         {
@@ -149,6 +141,7 @@ public class BossIntroDialogueCutscene : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (!allowTriggerStart) return;
         if (running) return;
         if (playOnce && played) return;
 
@@ -156,7 +149,6 @@ public class BossIntroDialogueCutscene : MonoBehaviour
         bool isMawaru = other.GetComponentInParent<MawaruController>() != null;
         if (!isPlayer && !isMawaru) return;
 
-        // 誰で開始したかを保存
         if (starter == Starter.AutoByTrigger)
             startedBy = isMawaru ? Starter.Mawaru : Starter.Player;
         else
@@ -165,46 +157,58 @@ public class BossIntroDialogueCutscene : MonoBehaviour
         StartCutscene();
     }
 
+    public void StartCutsceneFrom(Starter forcedStarter)
+    {
+        if (forcedStarter == Starter.Player || forcedStarter == Starter.Mawaru)
+        {
+            startedBy = forcedStarter;
+        }
+        else
+        {
+            startedBy = starter;
+        }
+
+        StartCutscene();
+    }
+
     public void StartCutscene()
     {
         if (running) return;
 
-        // InputSourceが未設定なら、シーン内のどれかを拾う
         if (!inputSource)
         {
             inputSource = FindObjectOfType<PlayerInput>();
             if (!inputSource)
             {
-                Debug.LogWarning("[Dialogue] inputSource(PlayerInput) が見つかりません。シーンに PlayerInput が必要です。");
+                Debug.LogWarning("[Dialogue] inputSource(PlayerInput) が見つかりません。");
                 return;
             }
         }
 
-        // 会話配列の選択
         activeLines = PickLines();
         if (activeLines == null || activeLines.Length == 0)
         {
-            Debug.LogWarning("[Dialogue] lines が空です（linesDefault / linesForPlayer / linesForMawaru を確認）");
+            Debug.LogWarning("[Dialogue] lines が空です。linesDefault / linesForPlayer / linesForMawaru を確認してください。");
             return;
         }
 
         if (!dialogueRoot || !dialogueText || !portraitImage)
         {
-            Debug.LogWarning("[Dialogue] UI参照が足りません（dialogueRoot/dialogueText/portraitImage）");
+            Debug.LogWarning("[Dialogue] UI参照が足りません。dialogueRoot / dialogueText / portraitImage を確認してください。");
             return;
         }
 
-        // VoiceSource 保険
         EnsureVoiceSource();
 
         played = true;
         running = true;
         index = 0;
 
-        // ---- BGM切替（会話BGMへ） ----
+        if (bossPanel && hideBossPanelWhenCutsceneStarts)
+            bossPanel.SetActive(false);
+
         if (switchBgmOnStart && bgmSource && dialogueBgm)
         {
-            // keep=false の時だけ「元に戻す情報」を取る
             if (!keepDialogueBgmAfterCutscene)
             {
                 prevBgmClip = bgmSource.clip;
@@ -221,17 +225,18 @@ public class BossIntroDialogueCutscene : MonoBehaviour
             bgmSource.Play();
         }
 
-        // 操作停止（スクリプト）
         if (lockBehaviours != null)
         {
             foreach (var b in lockBehaviours)
+            {
                 if (b) b.enabled = false;
+            }
         }
 
-        // その場固定（Rigidbody）
         if (freezeBodies != null)
         {
             bodyBackups = new BodyBackup[freezeBodies.Length];
+
             for (int i = 0; i < freezeBodies.Length; i++)
             {
                 var rb = freezeBodies[i];
@@ -252,11 +257,8 @@ public class BossIntroDialogueCutscene : MonoBehaviour
             }
         }
 
-        // ★重要：PlayerInputの ActivateInput / SwitchCurrentActionMap は使わない
-        // 代わりに ActionMap の Enable/Disable を手動で行う（CharacterSwitchで無効でも落ちない）
         BackupAndEnableDialogMap();
 
-        // 進めるActionを購読
         advanceAction = FindAdvanceAction();
         if (advanceAction != null)
         {
@@ -265,7 +267,7 @@ public class BossIntroDialogueCutscene : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[Dialogue] Advance action が見つかりません。Dialog/Next か Dialog/Submit を確認してね。");
+            Debug.LogWarning("[Dialogue] Advance action が見つかりません。Dialog/Next または Dialog/Submit を確認してください。");
         }
 
         dialogueRoot.SetActive(true);
@@ -284,19 +286,26 @@ public class BossIntroDialogueCutscene : MonoBehaviour
         {
             voiceSource.playOnAwake = false;
             voiceSource.loop = false;
-            if (forceVoice2D) voiceSource.spatialBlend = 0f; // 3Dで距離減衰して聞こえない事故を潰す
+            if (forceVoice2D) voiceSource.spatialBlend = 0f;
         }
     }
 
     Line[] PickLines()
     {
-        if (startedBy == Starter.Player && linesForPlayer != null && linesForPlayer.Length > 0) return linesForPlayer;
-        if (startedBy == Starter.Mawaru && linesForMawaru != null && linesForMawaru.Length > 0) return linesForMawaru;
+        if (startedBy == Starter.Player && linesForPlayer != null && linesForPlayer.Length > 0)
+            return linesForPlayer;
 
-        if (linesDefault != null && linesDefault.Length > 0) return linesDefault;
+        if (startedBy == Starter.Mawaru && linesForMawaru != null && linesForMawaru.Length > 0)
+            return linesForMawaru;
 
-        if (linesForPlayer != null && linesForPlayer.Length > 0) return linesForPlayer;
-        if (linesForMawaru != null && linesForMawaru.Length > 0) return linesForMawaru;
+        if (linesDefault != null && linesDefault.Length > 0)
+            return linesDefault;
+
+        if (linesForPlayer != null && linesForPlayer.Length > 0)
+            return linesForPlayer;
+
+        if (linesForMawaru != null && linesForMawaru.Length > 0)
+            return linesForMawaru;
 
         return null;
     }
@@ -315,8 +324,14 @@ public class BossIntroDialogueCutscene : MonoBehaviour
         }
 
         var dialogMap = inputSource.actions.FindActionMap(dialogActionMapName, throwIfNotFound: false);
-        if (dialogMap != null) dialogMap.Enable();
-        else Debug.LogWarning($"[Dialogue] ActionMap '{dialogActionMapName}' が見つかりません。InputActionsを確認してね。");
+        if (dialogMap != null)
+        {
+            dialogMap.Enable();
+        }
+        else
+        {
+            Debug.LogWarning("[Dialogue] ActionMap '" + dialogActionMapName + "' が見つかりません。");
+        }
     }
 
     InputAction FindAdvanceAction()
@@ -333,7 +348,6 @@ public class BossIntroDialogueCutscene : MonoBehaviour
             if (fb != null) return fb;
         }
 
-        // 保険：全体から探す
         var any = inputSource.actions.FindAction(advanceActionName, throwIfNotFound: false);
         if (any != null) return any;
 
@@ -349,11 +363,13 @@ public class BossIntroDialogueCutscene : MonoBehaviour
     void Next()
     {
         index++;
+
         if (index >= activeLines.Length)
         {
             EndCutscene();
             return;
         }
+
         ShowLine(index);
     }
 
@@ -365,16 +381,19 @@ public class BossIntroDialogueCutscene : MonoBehaviour
         var line = activeLines[i];
 
         dialogueText.text = line.text ?? "";
-        portraitImage.sprite = line.portrait;
-        portraitImage.enabled = (line.portrait != null);
-        if (nameText) nameText.text = line.speakerName ?? "";
 
-        // セリフ音声
+        portraitImage.sprite = line.portrait;
+        portraitImage.enabled = line.portrait != null;
+
+        if (nameText)
+            nameText.text = line.speakerName ?? "";
+
         if (voiceSource != null)
         {
             if (forceVoice2D) voiceSource.spatialBlend = 0f;
 
             voiceSource.Stop();
+
             if (line.voice != null)
                 voiceSource.PlayOneShot(line.voice, Mathf.Clamp01(line.voiceVolume));
         }
@@ -392,8 +411,7 @@ public class BossIntroDialogueCutscene : MonoBehaviour
         if (dialogueRoot) dialogueRoot.SetActive(false);
         if (voiceSource) voiceSource.Stop();
 
-        // ActionMap restore
-        if (maps.Count > 0 && mapWasEnabled != null)
+        if (mapWasEnabled != null && maps.Count > 0)
         {
             for (int i = 0; i < maps.Count; i++)
             {
@@ -402,7 +420,6 @@ public class BossIntroDialogueCutscene : MonoBehaviour
             }
         }
 
-        // Rigidbody restore
         if (freezeBodies != null && bodyBackups != null)
         {
             for (int i = 0; i < freezeBodies.Length; i++)
@@ -416,19 +433,19 @@ public class BossIntroDialogueCutscene : MonoBehaviour
             }
         }
 
-        // Script restore
         if (lockBehaviours != null)
         {
             foreach (var b in lockBehaviours)
+            {
                 if (b) b.enabled = true;
+            }
         }
 
         running = false;
 
-        if (bossPanel) bossPanel.SetActive(true);
+        if (bossPanel && showBossPanelWhenCutsceneEnds)
+            bossPanel.SetActive(true);
 
-        // ★ここが今回の要点：
-        // keepDialogueBgmAfterCutscene = true の時は「元BGMに戻さない」
         if (!keepDialogueBgmAfterCutscene)
         {
             if (bgmSource && dialogueBgm)
@@ -440,11 +457,14 @@ public class BossIntroDialogueCutscene : MonoBehaviour
                 if (prevBgmClip != null)
                 {
                     float len = prevBgmClip.length;
-                    bgmSource.time = (len > 0f) ? Mathf.Clamp(prevBgmTime, 0f, len - 0.01f) : 0f;
-                    if (prevBgmWasPlaying) bgmSource.Play();
+                    bgmSource.time = len > 0f ? Mathf.Clamp(prevBgmTime, 0f, len - 0.01f) : 0f;
+
+                    if (prevBgmWasPlaying)
+                        bgmSource.Play();
                 }
             }
         }
-        // keep=true の場合：何もしない（会話で切り替えたBGMがそのまま続く）
+
+        CutsceneFinished?.Invoke();
     }
 }

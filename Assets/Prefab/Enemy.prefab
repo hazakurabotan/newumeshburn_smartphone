@@ -223,7 +223,19 @@ MonoBehaviour:
   isGrabbed: 0
   isFlying: 0
   hpBar: {fileID: 8953277020573028297}
-  deathEffectPrefab: {fileID: 3334866903324842887, guid: f763a4fede8bfbe45aa79c14c1b1d6eb, type: 3}
+  damageSprite: {fileID: 21300000, guid: d8fd71276caba1d4b981bcab229c6c19, type: 3}
+  damageSpriteSeconds: 0.8
+  deadSprite: {fileID: 21300000, guid: 6a2bb2e507dfee743bc8f55e39223e04, type: 3}
+  deathSpriteSecondsBeforeDestroy: 1.2
+  disableAnimatorWhileSpecialSprite: 1
+  enableDamageKnockback: 1
+  damageKnockbackX: 0.3
+  damageKnockbackY: 0
+  damageKnockbackMoveSeconds: 0.08
+  stopVelocityAfterDamageKnockback: 1
+  invertDamageKnockbackDirection: 0
+  forceDamageKnockbackY: 0
+  deathEffectPrefab: {fileID: 0}
   deathEffectLife: 1.2
   enableItemDrop: 0
   dropPrefabs: []

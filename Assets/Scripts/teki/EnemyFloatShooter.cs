@@ -14,6 +14,16 @@ public class EnemyFloatShooter : MonoBehaviour
     public float floatAmplitude = 0.25f;
     public float floatFrequency = 1.2f;
 
+    [Header("Patrol Move")]
+    [Tooltip("ONにすると、壁ではなく開始位置から一定距離だけ動いたら反転します")]
+    public bool usePatrolDistance = true;
+
+    [Tooltip("開始位置から左右にどれだけ動いたら反転するか")]
+    public float patrolDistance = 0.8f;
+
+    [Tooltip("反転した瞬間に少し止まる時間")]
+    public float turnPauseSeconds = 0.05f;
+
     [Header("Shoot")]
     public Transform firePoint;
     public GameObject bulletPrefab;
@@ -21,17 +31,17 @@ public class EnemyFloatShooter : MonoBehaviour
     public float bulletSpeed = 6f;
     public float bulletLife = 3f;
 
-    [Header("Wall Flip (Non-Trigger walls too)")]
-    [Tooltip("回転部屋など“Triggerじゃない壁”も前方Castで検知して反転")]
-    public bool flipWhenBlocked = true;
+    [Header("Wall Flip")]
+    [Tooltip("壁にぶつかりそうな時に反転します。距離で往復させたい場合はOFF推奨")]
+    public bool flipWhenBlocked = false;
 
     [Tooltip("前方にこれだけCastして壁を検知")]
     public float wallCheckDistance = 0.12f;
 
-    [Tooltip("反転直後に少しだけ押し戻す（めり込みで停止するの防止）")]
+    [Tooltip("壁反転時に少し押し戻す距離")]
     public float unstuckDistance = 0.03f;
 
-    [Tooltip("連続反転（ガタガタ）防止クールダウン")]
+    [Tooltip("連続反転防止クールダウン")]
     public float flipCooldown = 0.10f;
 
     Rigidbody2D rb;
@@ -39,14 +49,15 @@ public class EnemyFloatShooter : MonoBehaviour
     Enemy enemy;
 
     float baseY;
+    float startX;
+
     float animTimer;
     int animIndex;
 
     float shootTimer;
-
     float flipCooldownTimer;
+    float turnPauseTimer;
 
-    // Cast用
     readonly RaycastHit2D[] castHits = new RaycastHit2D[8];
     ContactFilter2D castFilter;
 
@@ -56,56 +67,112 @@ public class EnemyFloatShooter : MonoBehaviour
         col = GetComponent<Collider2D>();
         enemy = GetComponentInParent<Enemy>();
 
-        if (!spriteRenderer) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
         baseY = rb.position.y;
+        startX = rb.position.x;
 
-        // Triggerは無視して“固い壁”だけ見る
         castFilter = new ContactFilter2D
         {
             useTriggers = false,
-            useLayerMask = false // ★レイヤーに依存しない（RoomModuleがDefaultでも検知）
+            useLayerMask = false
         };
+    }
+
+    void OnEnable()
+    {
+        if (rb != null)
+        {
+            baseY = rb.position.y;
+            startX = rb.position.x;
+        }
+
+        flipCooldownTimer = 0f;
+        turnPauseTimer = 0f;
+    }
+
+    void OnValidate()
+    {
+        if (moveSpeed < 0f) moveSpeed = 0f;
+        if (animFps < 0.01f) animFps = 0.01f;
+        if (floatFrequency < 0f) floatFrequency = 0f;
+        if (patrolDistance < 0.01f) patrolDistance = 0.01f;
+        if (turnPauseSeconds < 0f) turnPauseSeconds = 0f;
+        if (wallCheckDistance < 0f) wallCheckDistance = 0f;
+        if (unstuckDistance < 0f) unstuckDistance = 0f;
+        if (flipCooldown < 0f) flipCooldown = 0f;
     }
 
     void FixedUpdate()
     {
-        if (flipCooldownTimer > 0f) flipCooldownTimer -= Time.fixedDeltaTime;
+        if (rb == null) return;
 
-        // ★投げられ中 / 掴まれ中は Enemy.cs の物理に任せる（AI移動で上書きしない）
-        if (enemy != null && (enemy.IsThrown || enemy.IsGrabbed)) return;
+        if (flipCooldownTimer > 0f)
+            flipCooldownTimer -= Time.fixedDeltaTime;
 
-        // 進行方向
+        if (turnPauseTimer > 0f)
+            turnPauseTimer -= Time.fixedDeltaTime;
+
+        if (enemy != null)
+        {
+            if (enemy.IsThrown || enemy.IsGrabbed || enemy.IsShellStunned)
+                return;
+        }
+
         float dirX = moveRight ? 1f : -1f;
 
-        // ★前方が塞がってたら反転（回転部屋はTriggerじゃないのでここが効く）
+        if (usePatrolDistance && flipCooldownTimer <= 0f)
+        {
+            float rightLimit = startX + Mathf.Abs(patrolDistance);
+            float leftLimit = startX - Mathf.Abs(patrolDistance);
+
+            if (moveRight && rb.position.x >= rightLimit)
+            {
+                moveRight = false;
+                flipCooldownTimer = flipCooldown;
+                turnPauseTimer = turnPauseSeconds;
+
+                rb.position = new Vector2(rightLimit, rb.position.y);
+                dirX = -1f;
+            }
+            else if (!moveRight && rb.position.x <= leftLimit)
+            {
+                moveRight = true;
+                flipCooldownTimer = flipCooldown;
+                turnPauseTimer = turnPauseSeconds;
+
+                rb.position = new Vector2(leftLimit, rb.position.y);
+                dirX = 1f;
+            }
+        }
+
         if (flipWhenBlocked && flipCooldownTimer <= 0f)
         {
             if (IsBlocked(dirX))
             {
                 moveRight = !moveRight;
                 flipCooldownTimer = flipCooldown;
+                turnPauseTimer = turnPauseSeconds;
 
-                // 少し押し戻してめり込み解除
                 rb.position += new Vector2(-dirX * unstuckDistance, 0f);
-
-                // 反転後のdirを更新
                 dirX = moveRight ? 1f : -1f;
             }
         }
 
-        // 移動 + 浮遊
         float y = baseY + Mathf.Sin(Time.time * floatFrequency) * floatAmplitude;
         Vector2 pos = rb.position;
-        pos.x += dirX * moveSpeed * Time.fixedDeltaTime;
+
+        if (turnPauseTimer <= 0f)
+            pos.x += dirX * moveSpeed * Time.fixedDeltaTime;
+
         pos.y = y;
 
         rb.MovePosition(pos);
 
-        // 見た目の向き
-        if (spriteRenderer) spriteRenderer.flipX = moveRight;
+        if (spriteRenderer != null)
+            spriteRenderer.flipX = moveRight;
 
-        // 弾
         shootTimer += Time.fixedDeltaTime;
         if (shootTimer >= shootInterval)
         {
@@ -116,7 +183,8 @@ public class EnemyFloatShooter : MonoBehaviour
 
     bool IsBlocked(float dirX)
     {
-        // 近すぎると誤判定するので、ほんの少し前からCast
+        if (col == null) return false;
+
         Vector2 dir = new Vector2(dirX, 0f);
 
         int hitCount = col.Cast(dir, castFilter, castHits, wallCheckDistance);
@@ -124,20 +192,16 @@ public class EnemyFloatShooter : MonoBehaviour
 
         for (int i = 0; i < hitCount; i++)
         {
-            var h = castHits[i];
+            RaycastHit2D h = castHits[i];
             if (h.collider == null) continue;
 
-            // 自分の子/親は無視（念のため）
             if (h.collider.transform.IsChildOf(transform)) continue;
 
-            // プレイヤー系は無視（ぶつかって反転したくない）
             if (h.collider.GetComponentInParent<PlayerController>() != null) continue;
             if (h.collider.GetComponentInParent<MawaruController>() != null) continue;
 
-            // “敵同士”はレイヤー設定で基本当たらない想定だが、当たってたら無視
             if (h.collider.GetComponentInParent<Enemy>() != null) continue;
 
-            // ここまで来たら壁扱い（RoomModule/回転部屋もここに入る）
             return true;
         }
 
@@ -146,11 +210,10 @@ public class EnemyFloatShooter : MonoBehaviour
 
     void Update()
     {
-        // アニメ（見た目だけ）
         if (flySprites != null && flySprites.Length > 0 && spriteRenderer != null)
         {
             animTimer += Time.deltaTime;
-            float frameTime = (animFps <= 0f) ? 0.2f : (1f / animFps);
+            float frameTime = 1f / Mathf.Max(0.01f, animFps);
 
             if (animTimer >= frameTime)
             {
@@ -163,15 +226,32 @@ public class EnemyFloatShooter : MonoBehaviour
 
     void TryShoot(float dirX)
     {
-        if (!bulletPrefab || !firePoint) return;
+        if (bulletPrefab == null) return;
+        if (firePoint == null) return;
 
-        var go = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
-        var rb2 = go.GetComponent<Rigidbody2D>();
+        GameObject go = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
+
+        Rigidbody2D rb2 = go.GetComponent<Rigidbody2D>();
         if (rb2 != null)
         {
             rb2.velocity = new Vector2(dirX * bulletSpeed, 0f);
         }
 
         Destroy(go, bulletLife);
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        float centerX = Application.isPlaying ? startX : transform.position.x;
+        float d = Mathf.Abs(patrolDistance);
+
+        Vector3 center = new Vector3(centerX, transform.position.y, transform.position.z);
+        Vector3 left = center + Vector3.left * d;
+        Vector3 right = center + Vector3.right * d;
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawLine(left, right);
+        Gizmos.DrawWireSphere(left, 0.06f);
+        Gizmos.DrawWireSphere(right, 0.06f);
     }
 }

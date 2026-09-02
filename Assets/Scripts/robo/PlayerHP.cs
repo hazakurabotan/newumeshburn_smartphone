@@ -9,10 +9,30 @@ public class PlayerHP : MonoBehaviour
     // (current, max)
     public System.Action<int, int> OnHPChanged;
 
+    public bool IsDead => currentHP <= 0;
+    public int CurrentHP => currentHP;
+    public int MaxHP => maxHP;
+
     private void Awake()
     {
         if (maxHP <= 0) maxHP = 50;
-        currentHP = Mathf.Clamp(currentHP <= 0 ? maxHP : currentHP, 0, maxHP);
+
+        // Inspector上で currentHP が 0 のままでも、開始時は最大HPにする
+        if (currentHP <= 0)
+        {
+            currentHP = maxHP;
+        }
+        else
+        {
+            currentHP = Mathf.Clamp(currentHP, 0, maxHP);
+        }
+
+        Notify();
+    }
+
+    private void Start()
+    {
+        // UI側のStart/OnEnable後にも確実に1回通知する
         Notify();
     }
 
@@ -29,12 +49,13 @@ public class PlayerHP : MonoBehaviour
         int before = currentHP;
         currentHP = Mathf.Max(0, currentHP - amount);
 
-        if (currentHP != before) Notify();
+        Debug.Log($"[PlayerHP] Damage {amount} : {before} -> {currentHP}");
+
+        Notify();
 
         if (currentHP <= 0)
         {
-            Debug.Log("Player Dead");
-            // ここで死亡処理を呼びたいなら呼ぶ（既存のResult遷移スクリプト等）
+            Debug.Log("[PlayerHP] Player Dead");
         }
     }
 
@@ -45,32 +66,37 @@ public class PlayerHP : MonoBehaviour
         int before = currentHP;
         currentHP = Mathf.Min(maxHP, currentHP + amount);
 
-        if (currentHP != before) Notify();
+        Debug.Log($"[PlayerHP] Heal {amount} : {before} -> {currentHP}");
+
+        Notify();
     }
 
     public void SetHPDirect(int current, int max = -1)
     {
         if (max > 0)
+        {
             maxHP = max;
+        }
 
         if (maxHP <= 0)
+        {
             maxHP = 1;
+        }
 
         currentHP = Mathf.Clamp(current, 0, maxHP);
+
+        Debug.Log($"[PlayerHP] SetHPDirect : {currentHP}/{maxHP}");
+
         Notify();
     }
 
-
-    private void Notify()
-    {
-        OnHPChanged?.Invoke(currentHP, maxHP);
-    }
-
-    // ★昔の呼び出し互換：これを呼ばれてもUIが更新されるようにする
     public void DamageToPlayer(int damage)
     {
         TakeDamage(damage);
     }
 
-    public bool IsDead => currentHP <= 0;
+    private void Notify()
+    {
+        OnHPChanged?.Invoke(currentHP, maxHP);
+    }
 }

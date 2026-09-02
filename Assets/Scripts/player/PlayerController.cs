@@ -36,6 +36,10 @@ public class PlayerController : MonoBehaviour
     public AudioClip railgunVoiceClip;
     public GameObject laserPrefab;
 
+    [Header("Gacha Horn Input Override")]
+    [Tooltip("ON のとき、PlayerControls の Railgun（Right Trigger）入力を PlayerController では使いません。R1 は GachaHornController 側のコイン投入用として扱います。")]
+    public bool useRightTriggerForGachaHorn = true;
+
     // === 壁ジャンプ ===
     public float wallJumpPowerX = 7.0f;
     public float wallJumpPowerY = 12.0f;
@@ -642,6 +646,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnRailgun(InputAction.CallbackContext ctx)
     {
+        if (useRightTriggerForGachaHorn) return;
         if (GameManager.Instance != null && GameManager.Instance.IsPaused) return;
         if (!ctx.performed) return;
         ShowCutIn();
@@ -655,7 +660,11 @@ public class PlayerController : MonoBehaviour
             if (_railgunAction != null)
             {
                 _railgunAction.performed -= OnRailgun;
-                _railgunAction.performed += OnRailgun;
+
+                if (!useRightTriggerForGachaHorn)
+                {
+                    _railgunAction.performed += OnRailgun;
+                }
             }
 
             _summonAction = _playerInput.actions.FindAction("Summon");

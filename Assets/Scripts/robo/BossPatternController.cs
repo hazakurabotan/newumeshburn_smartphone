@@ -1,22 +1,41 @@
 ﻿using UnityEngine;
 using System.Collections;
+using TMPro;
 
 public class BossPatternController : MonoBehaviour
 {
-
     [Header("スラッシュ関連")]
-    public Sprite normalFarSprite;     // 奥にいるときのスプライト
-    public Sprite normalCloseSprite;   // 手前にいるときのスプライト
-    public Sprite slashReadySprite;    // 溜めモーションのスプライト
-    public Sprite slashAttackSprite;   // 斬撃モーションのスプライト
+    public Sprite normalFarSprite;
+    public Sprite normalCloseSprite;
+    public Sprite slashReadySprite;
+    public Sprite slashAttackSprite;
 
     [Header("のけぞりスプライト")]
-    public Sprite staggerSprite;      // ★ 追加
+    public Sprite staggerSprite;
 
+    [Header("プレイヤーへのダメージ")]
+    public int slashDamageToPlayer = 10;
+    public PlayerHP playerHP;
+    public MechaGuardController playerGuard;
 
-    public int slashDamageToPlayer = 10; // プレイヤーに与える斬撃ダメージ
-    public PlayerHP playerHP;            // PlayerHPスクリプトをここにドラッグして入れる
+    [Header("スラッシュ予告UI")]
+    public GameObject slashNoticePanel;
+    public TMP_Text slashNoticeText;
+    [TextArea(2, 3)] public string leftSlashNotice = "ひだりから\nスラッシュがくるよ";
+    [TextArea(2, 3)] public string rightSlashNotice = "みぎから\nスラッシュがくるよ";
 
+    [Header("スラッシュ予告タイミング")]
+    [Tooltip("BossMechaがスラッシュ攻撃を開始する何秒前に予告を出すか")]
+    public float slashNoticeLeadTime = 2.0f;
+
+    [Tooltip("スラッシュ直前の溜め時間。変更前の状態に戻すため0.5秒")]
+    public float slashReadyDuration = 0.5f;
+
+    [Tooltip("BossMechaが消える演出時間")]
+    public float disappearDuration = 0.3f;
+
+    [Tooltip("BossMechaが出現する演出時間")]
+    public float appearDuration = 0.3f;
 
     [Header("奥側のポイント")]
     public Transform farLeft;
@@ -30,103 +49,238 @@ public class BossPatternController : MonoBehaviour
     [Header("移動設定")]
     public float moveSpeed = 5f;
     public float waitTimeAtPoint = 0.5f;
-    public float farMoveDuration = 3f; // 「左右に移動」している時間
+    public float farMoveDuration = 3f;
 
-    BossHP bossHP;
-    SpriteRenderer sr;
-    Collider2D col;
+    private BossHP bossHP;
+    private SpriteRenderer sr;
+    private Collider2D col;
 
-    bool slashCanBeInterrupted = false;
-    bool slashInterrupted = false;
+    private bool slashCanBeInterrupted = false;
+    private bool slashInterrupted = false;
 
+    private void Awake()
+    {
+        bossHP = GetComponent<BossHP>();
+        sr = GetComponent<SpriteRenderer>();
+        col = GetComponent<Collider2D>();
+
+        ResolvePlayerReferences();
+        ResolveSlashNoticeReferences();
+        HideSlashNotice();
+    }
+
+    private void ResolvePlayerReferences()
+    {
+        if (playerHP == null)
+        {
+            GameObject playerObj = GameObject.FindWithTag("PlayerCore");
+
+            if (playerObj != null)
+            {
+                playerHP =
+                    playerObj.GetComponent<PlayerHP>() ??
+                    playerObj.GetComponentInChildren<PlayerHP>() ??
+                    playerObj.GetComponentInParent<PlayerHP>();
+            }
+        }
+
+        if (playerHP == null)
+        {
+            playerHP = FindObjectOfType<PlayerHP>();
+        }
+
+        if (playerGuard == null && playerHP != null)
+        {
+            playerGuard =
+                playerHP.GetComponent<MechaGuardController>() ??
+                playerHP.GetComponentInChildren<MechaGuardController>() ??
+                playerHP.GetComponentInParent<MechaGuardController>();
+        }
+
+        if (playerGuard == null)
+        {
+            playerGuard = FindObjectOfType<MechaGuardController>();
+        }
+
+        if (playerHP == null)
+        {
+            Debug.LogWarning("[BossPatternController] PlayerHP が見つかりません。BossMecha の Player HP に PlayerCore を入れてください。");
+        }
+
+        if (playerGuard == null)
+        {
+            Debug.LogWarning("[BossPatternController] MechaGuardController が見つかりません。防御判定なしで進みます。");
+        }
+    }
+
+    private void ResolveSlashNoticeReferences()
+    {
+        if (slashNoticePanel != null && slashNoticeText == null)
+        {
+            slashNoticeText = slashNoticePanel.GetComponentInChildren<TMP_Text>(true);
+        }
+    }
+
+    private void ShowSlashNotice(bool fromLeft)
+    {
+        ResolveSlashNoticeReferences();
+
+        if (slashNoticeText != null)
+        {
+            slashNoticeText.text = fromLeft ? leftSlashNotice : rightSlashNotice;
+        }
+
+        if (slashNoticePanel != null)
+        {
+            slashNoticePanel.SetActive(true);
+        }
+    }
+
+    private void HideSlashNotice()
+    {
+        if (slashNoticeText != null)
+        {
+            slashNoticeText.text = "";
+        }
+
+        if (slashNoticePanel != null)
+        {
+            slashNoticePanel.SetActive(false);
+        }
+    }
 
     public void OnPunchedByPlayer()
     {
         if (slashCanBeInterrupted)
         {
             slashInterrupted = true;
+            Debug.Log("[BossPatternController] Slash interrupted by player punch.");
         }
     }
 
-    void Awake()
+    private IEnumerator Start()
     {
-        bossHP = GetComponent<BossHP>();
-        sr = GetComponent<SpriteRenderer>();
-        col = GetComponent<Collider2D>();
-    }
+        ResolvePlayerReferences();
+        ResolveSlashNoticeReferences();
+        HideSlashNotice();
 
-    IEnumerator Start()
-    {
-        // 開始位置は中央・奥
-        transform.position = farCenter.position;
+        if (farCenter != null)
+        {
+            transform.position = farCenter.position;
+        }
 
-        if (normalFarSprite != null)
+        if (normalFarSprite != null && sr != null)
         {
             sr.sprite = normalFarSprite;
         }
-        Debug.Log("BossPattern Start");
+
+        Debug.Log("[BossPatternController] Start");
 
         while (true)
         {
-            // HPがあるか確認して、死んでたら終了
             if (bossHP != null && bossHP.IsDead)
             {
-                Debug.Log("BossPattern end : boss is dead");
+                Debug.Log("[BossPatternController] End : boss is dead");
+                HideSlashNotice();
                 yield break;
             }
 
-            bool leftPattern = Random.value < 0.5f; // true = 左パターン
-            Debug.Log("Boss DoPattern  left = " + leftPattern);
+            bool leftPattern = Random.value < 0.5f;
+            Debug.Log("[BossPatternController] DoPattern left = " + leftPattern);
 
             yield return StartCoroutine(DoPattern(leftPattern));
         }
     }
 
-    IEnumerator DoPattern(bool isLeft)
+    private IEnumerator DoPattern(bool isLeft)
     {
-        // 1. 奥：ミサイル発射
         yield return StartCoroutine(DoMissileAttack());
 
-        // 2. 奥：左右に移動
         yield return StartCoroutine(DoFarMove());
 
-        // 3. 奥：中央に戻る
-        yield return StartCoroutine(MoveTo(farCenter.position));
+        if (farCenter != null)
+        {
+            yield return StartCoroutine(MoveTo(farCenter.position));
+        }
 
-        // 4. 奥：端まで移動して消える
-        Vector3 sideFarPos = isLeft ? farLeft.position : farRight.position;
-        yield return StartCoroutine(MoveTo(sideFarPos));
+        Transform sideFar = isLeft ? farLeft : farRight;
+        if (sideFar != null)
+        {
+            yield return StartCoroutine(MoveTo(sideFar.position));
+        }
+
+        // ここで予告を出す。
+        // この後の「消える → 出る → 溜め」込みで、スラッシュ開始の約2秒前になる。
+        yield return StartCoroutine(ShowSlashNoticeBeforeSlash(isLeft));
+
         yield return StartCoroutine(Disappear());
 
-        // 5. 手前：端から出現 → 斬撃
         Transform closePos = isLeft ? closeLeft : closeRight;
-        transform.position = closePos.position;
-        yield return StartCoroutine(Appear());
-        yield return StartCoroutine(DoSlash(isLeft)); // ここでプレイヤーが左右パンチ＆ガードするフェーズ
 
-        // 6. 手前：端に消える
+        if (closePos != null)
+        {
+            transform.position = closePos.position;
+        }
+
+        yield return StartCoroutine(Appear());
+
+        if (normalCloseSprite != null && sr != null)
+        {
+            sr.sprite = normalCloseSprite;
+        }
+
+        yield return StartCoroutine(DoSlash(isLeft));
+
         yield return StartCoroutine(Disappear());
 
-        // 7. 奥：同じ側から出てくる
-        transform.position = sideFarPos;
+        if (sideFar != null)
+        {
+            transform.position = sideFar.position;
+        }
+
         yield return StartCoroutine(Appear());
 
-        // ★ここで奥用スプライトに戻す
-        if (normalFarSprite != null)
+        if (normalFarSprite != null && sr != null)
         {
             sr.sprite = normalFarSprite;
         }
 
-        // 8. 奥：ミサイル発射
         yield return StartCoroutine(DoMissileAttack());
 
-        // 9. 奥：左右に移動
         yield return StartCoroutine(DoFarMove());
     }
 
-    // ========= 各アクション =========
+    private IEnumerator ShowSlashNoticeBeforeSlash(bool fromLeft)
+    {
+        ShowSlashNotice(fromLeft);
 
-    IEnumerator MoveTo(Vector3 targetPos)
+        float timeUntilSlashAfterThisWait =
+            Mathf.Max(0f, disappearDuration) +
+            Mathf.Max(0f, appearDuration) +
+            Mathf.Max(0f, slashReadyDuration);
+
+        float waitBeforeMove =
+            Mathf.Max(0f, slashNoticeLeadTime - timeUntilSlashAfterThisWait);
+
+        Debug.Log(
+            "[BossPatternController] Slash notice. fromLeft = " +
+            fromLeft +
+            " / leadTime = " +
+            slashNoticeLeadTime +
+            " / waitBeforeMove = " +
+            waitBeforeMove
+        );
+
+        float timer = waitBeforeMove;
+
+        while (timer > 0f)
+        {
+            timer -= Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    private IEnumerator MoveTo(Vector3 targetPos)
     {
         while ((transform.position - targetPos).sqrMagnitude > 0.001f)
         {
@@ -135,20 +289,26 @@ public class BossPatternController : MonoBehaviour
                 targetPos,
                 moveSpeed * Time.deltaTime
             );
+
             yield return null;
         }
+
         yield return new WaitForSeconds(waitTimeAtPoint);
     }
 
-    IEnumerator DoFarMove()
+    private IEnumerator DoFarMove()
     {
+        if (farLeft == null || farRight == null)
+        {
+            yield break;
+        }
+
         float t = 0f;
         Vector3 a = farLeft.position;
         Vector3 b = farRight.position;
 
         while (t < farMoveDuration)
         {
-            // 左右に往復する簡単な動き
             float pingpong = Mathf.PingPong(t * 0.5f, 1f);
             transform.position = Vector3.Lerp(a, b, pingpong);
 
@@ -157,124 +317,164 @@ public class BossPatternController : MonoBehaviour
         }
     }
 
-    IEnumerator DoMissileAttack()
+    private IEnumerator DoMissileAttack()
     {
-        // ここで最大5発までミサイルを撃つ処理
-        // 発射間隔などはお好みで
-        int count = Random.Range(3, 6); // 3〜5発くらい
+        int count = Random.Range(3, 6);
+
         for (int i = 0; i < count; i++)
         {
-            FireMissile(); // 実際のミサイル生成処理
+            FireMissile();
             yield return new WaitForSeconds(0.4f);
         }
+
         yield return new WaitForSeconds(0.5f);
     }
 
-    void FireMissile()
+    private void FireMissile()
     {
-        // ミサイル生成＆方向を決める処理を書く
+        // 既に BossMissileShooter を別で使っている場合はここは空のままでOK
     }
 
-    IEnumerator DoSlash(bool fromLeft)
+    private IEnumerator DoSlash(bool fromLeft)
     {
-        // 近距離パンチが当たる判定をON（任意）
         EnableCloseHitbox(true);
 
         slashCanBeInterrupted = true;
         slashInterrupted = false;
 
-        // 溜めスプライト
-        if (slashReadySprite != null)
+        if (slashReadySprite != null && sr != null)
+        {
             sr.sprite = slashReadySprite;
+        }
 
-        // パンチでキャンセルできる時間
-        float preTime = 0.5f;
+        Debug.Log("[BossPatternController] Slash ready. fromLeft = " + fromLeft);
+
+        float preTime = Mathf.Max(0f, slashReadyDuration);
+
         while (preTime > 0f && !slashInterrupted)
         {
             preTime -= Time.deltaTime;
             yield return null;
         }
 
-        // ここからキャンセル不可
         slashCanBeInterrupted = false;
         EnableCloseHitbox(false);
+        HideSlashNotice();
 
         if (slashInterrupted)
         {
-            // のけぞりアニメだけして終了
             yield return StartCoroutine(PlayStaggerAnim());
             yield break;
         }
 
-        // 斬撃（ヒット＋ダメージ）
         yield return StartCoroutine(PlaySlashAnimAndHit(fromLeft));
     }
 
-    IEnumerator Disappear()
+    private IEnumerator Disappear()
     {
-        col.enabled = false;
-        // フェードアウトしたいならアルファを徐々に下げる
-        sr.enabled = false;
-        yield return new WaitForSeconds(0.3f);
+        if (col != null)
+        {
+            col.enabled = false;
+        }
+
+        if (sr != null)
+        {
+            sr.enabled = false;
+        }
+
+        yield return new WaitForSeconds(Mathf.Max(0f, disappearDuration));
     }
 
-    IEnumerator Appear()
+    private IEnumerator Appear()
     {
-        sr.enabled = true;
-        col.enabled = true;
-        yield return new WaitForSeconds(0.3f);
+        if (sr != null)
+        {
+            sr.enabled = true;
+        }
+
+        if (col != null)
+        {
+            col.enabled = true;
+        }
+
+        yield return new WaitForSeconds(Mathf.Max(0f, appearDuration));
     }
 
-    void EnableCloseHitbox(bool on)
+    private void EnableCloseHitbox(bool on)
     {
-        // 近距離パンチ用ColliderのON/OFFなど
+        // 今回は直接ダメージ方式なので空でOK
     }
 
-    IEnumerator PlayStaggerAnim()
+    private IEnumerator PlayStaggerAnim()
     {
-        Debug.Log("Boss stagger (punched during slash)");
+        Debug.Log("[BossPatternController] Boss stagger");
 
-        // まずのけぞり用スプライトに差し替え
-        if (staggerSprite != null)
+        if (staggerSprite != null && sr != null)
         {
             sr.sprite = staggerSprite;
         }
 
-        // のけぞってる時間
-        float t = 0.2f;
-        while (t > 0f)
-        {
-            t -= Time.deltaTime;
-            yield return null;
-        }
+        yield return new WaitForSeconds(0.2f);
 
-        // 終わったら手前の通常スプライトに戻す
-        if (normalCloseSprite != null)
+        if (normalCloseSprite != null && sr != null)
         {
             sr.sprite = normalCloseSprite;
         }
+
+        HideSlashNotice();
     }
 
-    IEnumerator PlaySlashAnimAndHit(bool fromLeft)
+    private IEnumerator PlaySlashAnimAndHit(bool fromLeft)
     {
-        // 斬撃時のスプライト
-        if (slashAttackSprite != null)
+        if (slashAttackSprite != null && sr != null)
+        {
             sr.sprite = slashAttackSprite;
+        }
 
-        // 演出のため少し待つ
+        Debug.Log("[BossPatternController] Slash attack start. fromLeft = " + fromLeft);
+
         yield return new WaitForSeconds(0.15f);
 
-        // ★ プレイヤーにダメージ
-        if (playerHP != null)
+        ResolvePlayerReferences();
+
+        bool guarded = false;
+
+        if (playerGuard != null)
         {
-            playerHP.DamageToPlayer(slashDamageToPlayer);
+            if (fromLeft)
+            {
+                guarded = playerGuard.IsGuardingFromLeftAttack();
+            }
+            else
+            {
+                guarded = playerGuard.IsGuardingFromRightAttack();
+            }
         }
 
-        // 元の手前スプライトへ戻す
+        if (guarded)
+        {
+            Debug.Log("[BossPatternController] Slash blocked by guard.");
+        }
+        else
+        {
+            if (playerHP != null)
+            {
+                Debug.Log("[BossPatternController] Slash hit player. damage = " + slashDamageToPlayer);
+                playerHP.DamageToPlayer(slashDamageToPlayer);
+            }
+            else
+            {
+                Debug.LogWarning("[BossPatternController] Slash hit, but PlayerHP is null.");
+            }
+        }
+
         yield return new WaitForSeconds(0.25f);
 
-        if (normalCloseSprite != null)
+        if (normalCloseSprite != null && sr != null)
+        {
             sr.sprite = normalCloseSprite;
-    }
+        }
 
+        HideSlashNotice();
+    }
 }

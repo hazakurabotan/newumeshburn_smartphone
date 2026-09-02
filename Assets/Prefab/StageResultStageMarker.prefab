@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2406435934576360214
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6566938936257522567}
+  - component: {fileID: 6279557392742975956}
+  - component: {fileID: 6148598148389912526}
+  - component: {fileID: 720370741485190301}
+  m_Layer: 0
+  m_Name: StageResultStageMarker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6566938936257522567
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2406435934576360214}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 181.90198, y: -1.301748, z: -0.0055996072}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6279557392742975956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2406435934576360214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07bdd0ee9185b0143a79c1cf6d616589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stageDisplayName: "\u30C1\u30E5\u30FC\u30C8\u30EA\u30A2\u30EB"
+  beginOnStart: 1
+--- !u!114 &6148598148389912526
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2406435934576360214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ef71d58d26d0484ea6c1707a793b8ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentStageName: 
+  stageStartTime: 0
+  stageStarted: 0
+  baselineCaptured: 0
+  baselineJuiceDefinitionIndices: 
+  baselineMdKeys: []
+  manuallyRegisteredMdItems: []
+--- !u!114 &720370741485190301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2406435934576360214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 930824ff9c3be184cbc11ed10e8cbd80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  trackJuices: 1
+  trackMdDisks: 1
+  mdPollInterval: 0.15
+  verboseLog: 1
